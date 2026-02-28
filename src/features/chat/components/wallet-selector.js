@@ -6,10 +6,10 @@ export function WalletSelector() {
     <div class="relative wallet-selector-container">
       <button 
         id="wallet-selector-btn"
-        class="p-3 aspect-square flex items-center justify-center rounded-xl bg-white dark:bg-bg-card border border-slate-200 dark:border-border text-slate-500 hover:text-neo-green transition-all shadow-sm hover:shadow-md"
+        class="p-2 rounded-lg text-slate-400 hover:text-neo-green hover:bg-neo-green/10 transition-all flex items-center justify-center"
         title="Select Wallets"
       >
-        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect>
           <line x1="2" y1="10" x2="22" y2="10"></line>
         </svg>

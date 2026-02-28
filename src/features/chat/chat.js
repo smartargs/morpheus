@@ -7,6 +7,7 @@ import { Button } from '../../shared/components/button.js';
 import { EmptyState } from '../../shared/components/empty-state.js';
 import { ActivityCard, initActivityCard } from './components/activity-card.js';
 import { WalletSelector, initWalletSelector } from './components/wallet-selector.js';
+import { ModelSelector, initModelSelector } from './components/model-selector.js';
 import { parseMarkdown, esc } from '../../shared/utils/helpers.js';
 
 export async function renderChat() {
@@ -37,29 +38,39 @@ export async function renderChat() {
         <div class="flex-1 flex items-center justify-center opacity-50"><div class="animate-pulse">Loading conversation...</div></div>
       </div>
       
-      <div class="px-8 py-5 pb-6 border-t border-slate-200 dark:border-border bg-slate-50 dark:bg-bg-secondary w-full">
-        <div class="flex gap-2.5 w-full mx-auto relative items-center">
-          ${WalletSelector()}
-          ${TextArea({
-            id: 'chat-input',
-            placeholder: 'Ask the agent something...',
-            className: 'min-h-[48px] max-h-[120px] flex-1'
-          })}
-          <div class="flex gap-2">
-            ${Button({
-              id: 'send-btn',
-              title: 'Send',
-              variant: 'primary',
-              className: 'p-3 aspect-square flex items-center justify-center',
-              icon: '<svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>'
+      <div class="px-8 pt-10 pb-12 border-t border-slate-200 dark:border-border bg-white dark:bg-bg-secondary w-full overflow-visible">
+        <div class="w-full group overflow-visible">
+          <div class="flex flex-col bg-slate-50 dark:bg-bg-input border border-slate-200 dark:border-border-light rounded-2xl focus-within:border-neo-green/60 focus-within:shadow-[0_0_0_1px_rgba(0,229,153,0.3),0_0_20px_rgba(0,229,153,0.15)] focus-within:z-10 transition-all shadow-sm hover:shadow-md relative overflow-visible">
+            <!-- Text Input -->
+            ${TextArea({
+              id: 'chat-input',
+              placeholder: 'Ask Morpheus anything...',
+              className: 'min-h-[60px] max-h-[160px] border-none bg-transparent focus:ring-0 px-5 py-4 text-[15px] leading-relaxed'
             })}
-            ${Button({
-              id: 'stop-btn',
-              label: 'Stop',
-              variant: 'danger',
-              className: 'hidden items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold',
-              icon: '■'
-            })}
+            
+            <!-- Bottom Tool Bar -->
+            <div class="flex items-center justify-between px-3 py-2 border-t border-slate-200/50 dark:border-border/30 bg-white/50 dark:bg-white/5">
+              <div class="flex items-center gap-1">
+                ${WalletSelector()}
+                <div class="w-px h-4 bg-slate-200 dark:bg-border/50 mx-1"></div>
+                ${ModelSelector()}
+              </div>
+              
+              <div class="flex items-center gap-2">
+                ${Button({
+                  id: 'stop-btn',
+                  variant: 'danger',
+                  className: 'hidden items-center justify-center p-2 rounded-xl text-sm transition-all',
+                  icon: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>'
+                })}
+                ${Button({
+                  id: 'send-btn',
+                  variant: 'primary',
+                  className: 'w-10 h-10 rounded-xl flex items-center justify-center p-0 shadow-lg shadow-neo-green/20 ring-1 ring-white/10',
+                  icon: '<svg class="w-5 h-5 translate-x-[1px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>'
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -67,6 +78,7 @@ export async function renderChat() {
 
   initChatListeners();
   initWalletSelector();
+  initModelSelector();
   await loadActiveSession();
 }
 
@@ -185,8 +197,8 @@ function renderEvents(container, events) {
     container.innerHTML = EmptyState({
       id: 'chat-empty',
       icon: '◆',
-      title: 'Neo N3 Assistant',
-      message: 'Ask me anything about the Neo N3 blockchain — check balances, transfer assets, invoke contracts, and more.'
+      title: 'Morpheus',
+      message: 'Ask me anything about the Neo N3 blockchain — check balances, transfer assets, or navigate the Matrix.'
     });
     return;
   }

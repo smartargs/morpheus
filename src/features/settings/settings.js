@@ -54,7 +54,7 @@ export async function renderSettings() {
           ${TextArea({
             id: 'system-instructions',
             value: esc(state.settings.systemInstructions || ''),
-            placeholder: 'e.g. You are a helpful Neo N3 assistant focused on DeFi...',
+            placeholder: 'e.g. You are Morpheus, a helpful AI guide for Neo N3...',
             className: 'min-h-[120px]'
           })}
         </div>
@@ -63,7 +63,7 @@ export async function renderSettings() {
 
         <div class="pt-8 border-t border-slate-200 dark:border-border">
           <label class="block text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-text-secondary mb-1">Available MCP Tools</label>
-          <p class="text-[13px] text-slate-500 dark:text-text-secondary mb-4">Tools the agent can invoke via the Neo N3 MCP server.</p>
+          <p class="text-[13px] text-slate-500 dark:text-text-secondary mb-4">Functional modules that Morpheus can use to interact with the Neo N3 blockchain.</p>
           <div id="tools-list" class="space-y-2">
             <p class="text-[13px] text-slate-400 dark:text-text-muted">Loading tools...</p>
           </div>

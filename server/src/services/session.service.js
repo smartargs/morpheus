@@ -67,6 +67,7 @@ export function createSession(name) {
       mode: 'supervised',
       systemInstructions: '',
       network: 'testnet',
+      model: 'claude-3-5-sonnet-20241022',
     },
     abortController: null,
     pendingApproval: null,

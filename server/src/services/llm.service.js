@@ -26,7 +26,7 @@ function buildSystemPrompt(session) {
     ? `\n\nUser Instructions:\n${session.settings.systemInstructions}`
     : '';
 
-  return `You are a Neo N3 blockchain assistant. You help users interact with the Neo N3 ${session.settings.network} blockchain.
+  return `You are Morpheus, an AI guide for the Neo N3 blockchain. You help users interact with the Neo N3 ${session.settings.network} blockchain.
 
 Available wallets for operations:
 ${walletInfo}
@@ -65,7 +65,7 @@ export async function runAgentLoop(session, userMessage, mcpTools, emitEvent) {
 
       const response = await client.messages.create(
         {
-          model: 'claude-3-5-sonnet-20241022',
+          model: session.settings.model || 'claude-3-5-sonnet-20241022',
           max_tokens: 4096,
           system: buildSystemPrompt(session),
           tools,
