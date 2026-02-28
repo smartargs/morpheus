@@ -65,7 +65,7 @@ export async function runAgentLoop(session, userMessage, mcpTools, emitEvent) {
 
       const response = await client.messages.create(
         {
-          model: session.settings.model || 'claude-3-5-sonnet-20241022',
+          model: session.settings.model || 'claude-sonnet-4-6',
           max_tokens: 4096,
           system: buildSystemPrompt(session),
           tools,

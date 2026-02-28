@@ -51,6 +51,7 @@ export function listSessions() {
     name: s.name,
     createdAt: s.createdAt,
     updatedAt: s.updatedAt || s.createdAt,
+    settings: s.settings,
     isRunning: !!s.abortController
   })).sort((a, b) => b.updatedAt - a.updatedAt);
 }
@@ -67,7 +68,7 @@ export function createSession(name) {
       mode: 'supervised',
       systemInstructions: '',
       network: 'testnet',
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-6',
     },
     abortController: null,
     pendingApproval: null,

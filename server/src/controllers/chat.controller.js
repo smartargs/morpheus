@@ -10,6 +10,11 @@ export const sendMessage = async (req, res) => {
   if (!session) return res.status(404).json({ error: 'Session not found' });
   if (!message) return res.status(400).json({ error: 'Message required' });
 
+  // Update session settings with model if provided (ensures immediate persistence)
+  if (req.body.model) {
+    sessionService.updateSettings(session.id, { model: req.body.model });
+  }
+
   res.json({ sessionId: session.id, status: 'processing' });
 
   try {

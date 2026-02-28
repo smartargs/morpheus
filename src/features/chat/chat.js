@@ -38,7 +38,7 @@ export async function renderChat() {
         <div class="flex-1 flex items-center justify-center opacity-50"><div class="animate-pulse">Loading conversation...</div></div>
       </div>
       
-      <div class="px-8 pt-10 pb-12 border-t border-slate-200 dark:border-border bg-white dark:bg-bg-secondary w-full overflow-visible">
+      <div class="px-4 pt-5 pb-6 border-t border-slate-200 dark:border-border bg-white dark:bg-bg-secondary w-full overflow-visible">
         <div class="w-full group overflow-visible">
           <div class="flex flex-col bg-slate-50 dark:bg-bg-input border border-slate-200 dark:border-border-light rounded-2xl focus-within:border-neo-green/60 focus-within:shadow-[0_0_0_1px_rgba(0,229,153,0.3),0_0_20px_rgba(0,229,153,0.15)] focus-within:z-10 transition-all shadow-sm hover:shadow-md relative overflow-visible">
             <!-- Text Input -->
@@ -237,10 +237,9 @@ async function handleSendMessage() {
   }
 
   try {
-    await chatApi.sendMessage(msg, state.activeSessionId);
-    
-    // Check if we need to refresh the session name
     const currentSession = state.sessions.find(s => s.id === state.activeSessionId);
+    const model = currentSession?.settings?.model;
+    await chatApi.sendMessage(msg, state.activeSessionId, model);
     const isDefaultName = currentSession && (currentSession.name === 'New Chat' || currentSession.name.startsWith('Chat '));
     
     // If it was a default name, it likely got auto-renamed on the backend

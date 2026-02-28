@@ -2,9 +2,9 @@ import { state } from '../../../state.js';
 import { api } from '../../../shared/services/api.js';
 
 export const CLAUDE_MODELS = [
-  { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', icon: '⚡' },
-  { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', icon: '🧠' },
-  { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', icon: '🏎️' },
+  { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', icon: '⚡' },
+  { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', icon: '🧠' },
+  { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', icon: '🏎️' },
 ];
 
 export function ModelSelector() {
@@ -14,16 +14,16 @@ export function ModelSelector() {
 
   return `
     <div class="model-selector relative inline-block text-left" id="model-selector-container">
-      <button type="button" class="inline-flex items-center gap-2 px-2 py-1.5 rounded-lg text-[13px] font-medium text-slate-500 dark:text-text-muted hover:bg-slate-200/50 dark:hover:bg-border/30 transition-all active:scale-95" id="model-selector-btn">
-        <span class="text-base leading-none translate-y-[-1px] opacity-90">${currentModel.icon}</span>
-        <span class="tracking-tight">${currentModel.name}</span>
+      <button type="button" class="inline-flex items-center gap-2 px-2 py-1.5 rounded-lg text-[12px] font-medium text-slate-500 dark:text-text-muted hover:bg-slate-200/50 dark:hover:bg-border/30 transition-all active:scale-95 whitespace-nowrap" id="model-selector-btn">
+        <span class="text-base leading-none translate-y-[-1px] opacity-90" id="current-model-icon">${currentModel.icon}</span>
+        <span class="tracking-tight" id="current-model-name">${currentModel.name}</span>
         <svg class="w-3.5 h-3.5 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
       
-      <div class="hidden absolute bottom-full left-0 mb-2 w-48 bg-white dark:bg-bg-card border border-slate-200 dark:border-border rounded-xl shadow-xl z-50 overflow-hidden" id="model-selector-dropdown">
+      <div class="hidden absolute bottom-full left-0 mb-2 min-w-[180px] bg-white dark:bg-bg-card border border-slate-200 dark:border-border rounded-xl shadow-xl z-50 overflow-hidden" id="model-selector-dropdown">
         <div class="py-1">
           ${CLAUDE_MODELS.map(model => `
-            <button class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-bg-card-hover flex items-center justify-between group transition-colors ${currentModelId === model.id ? 'text-neo-green font-semibold bg-neo-green/5' : 'text-slate-600 dark:text-text-secondary'}" data-model-id="${model.id}">
+            <button class="w-full text-left px-4 py-2.5 text-[12px] hover:bg-slate-50 dark:hover:bg-bg-card-hover flex items-center justify-between group transition-colors whitespace-nowrap gap-4 ${currentModelId === model.id ? 'text-neo-green font-semibold bg-neo-green/5' : 'text-slate-600 dark:text-text-secondary'}" data-model-id="${model.id}">
               <div class="flex items-center gap-2.5">
                 <span class="text-base">${model.icon}</span>
                 <span>${model.name}</span>
@@ -44,6 +44,16 @@ export function initModelSelector() {
 
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
+    const isOpening = dropdown.classList.contains('hidden');
+    if (isOpening) {
+      // Close other dropdowns
+      const walletDropdown = document.getElementById('wallet-selector-dropdown');
+      if (walletDropdown) {
+        walletDropdown.classList.replace('opacity-100', 'opacity-0');
+        walletDropdown.classList.replace('scale-100', 'scale-95');
+        walletDropdown.classList.add('pointer-events-none');
+      }
+    }
     dropdown.classList.toggle('hidden');
   });
 
@@ -57,13 +67,22 @@ export function initModelSelector() {
       const activeSession = state.sessions.find(s => s.id === state.activeSessionId);
       
       if (activeSession) {
-        // Optimistic update
+        // Ensure settings object exists
+        if (!activeSession.settings) activeSession.settings = {};
+        
+        // Optimistic update session
         activeSession.settings.model = modelId;
+        
+        // Also update global state settings for sync
+        state.settings.model = modelId;
         
         const label = button.querySelector('span:not(.text-base)').textContent;
         const icon = button.querySelector('.text-base').textContent;
-        btn.querySelector('span:not(.opacity-70)').textContent = label;
-        btn.querySelector('.opacity-70').textContent = icon;
+        
+        const labelEl = document.getElementById('current-model-name');
+        const iconEl = document.getElementById('current-model-icon');
+        if (labelEl) labelEl.textContent = label;
+        if (iconEl) iconEl.textContent = icon;
         
         // Persist
         try {

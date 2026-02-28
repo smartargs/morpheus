@@ -1,8 +1,9 @@
 // Chat Feature API
 export const chatApi = {
-  async sendMessage(message, sessionId) {
+  async sendMessage(message, sessionId, model) {
     const body = { message };
     if (sessionId) body.sessionId = sessionId;
+    if (model) body.model = model;
     return fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

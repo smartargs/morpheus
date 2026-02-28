@@ -46,6 +46,9 @@ export async function initWalletSelector() {
     const isOpening = !dropdown.classList.contains('opacity-100');
     
     if (isOpening) {
+      // Close other dropdowns
+      document.getElementById('model-selector-dropdown')?.classList.add('hidden');
+
       // Refresh state from server if empty
       if (state.wallets.length === 0) {
         const wallets = await walletsApi.getWallets();
