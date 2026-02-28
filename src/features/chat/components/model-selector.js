@@ -47,6 +47,7 @@ export function initModelSelector() {
     const isOpening = dropdown.classList.contains('hidden');
     if (isOpening) {
       // Close other dropdowns
+      document.getElementById('network-dropdown')?.classList.add('hidden');
       const walletDropdown = document.getElementById('wallet-selector-dropdown');
       if (walletDropdown) {
         walletDropdown.classList.replace('opacity-100', 'opacity-0');

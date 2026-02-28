@@ -41,6 +41,17 @@ export function initNetworkSelector(onChanged) {
 
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
+    const isOpening = dropdown.classList.contains('hidden');
+    if (isOpening) {
+      // Close other dropdowns
+      document.getElementById('model-selector-dropdown')?.classList.add('hidden');
+      const walletDropdown = document.getElementById('wallet-selector-dropdown');
+      if (walletDropdown) {
+        walletDropdown.classList.replace('opacity-100', 'opacity-0');
+        walletDropdown.classList.replace('scale-100', 'scale-95');
+        walletDropdown.classList.add('pointer-events-none');
+      }
+    }
     dropdown.classList.toggle('hidden');
   });
 

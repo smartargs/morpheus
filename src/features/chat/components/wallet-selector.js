@@ -48,7 +48,7 @@ export async function initWalletSelector() {
     if (isOpening) {
       // Close other dropdowns
       document.getElementById('model-selector-dropdown')?.classList.add('hidden');
-
+      document.getElementById('network-dropdown')?.classList.add('hidden');
       // Refresh state from server if empty
       if (state.wallets.length === 0) {
         const wallets = await walletsApi.getWallets();

@@ -7,8 +7,9 @@ import { LOCAL_TOOL_DEFINITIONS } from './definitions.js';
  */
 export async function executeRpcTool(toolName, toolArgs, session) {
   const method = toolName.replace('rpc_', '');
-  const network = toolArgs.network || session?.settings?.network || 'testnet';
+  const network = session?.settings?.network || toolArgs.network || 'testnet';
   
+  console.log(`[RPC] Tool: ${toolName} | session.settings.network: ${session?.settings?.network} | toolArgs.network: ${toolArgs.network} | resolved: ${network}`);
   // Find the tool definition to get the correct positional order
   const def = LOCAL_TOOL_DEFINITIONS.find(d => d.name === toolName);
   const rpcParams = [];

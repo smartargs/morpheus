@@ -25,6 +25,45 @@ export const importW = (req, res) => {
   res.json(wallet);
 };
 
+export const importJson = (req, res) => {
+  try {
+    const data = req.body;
+    const imported = [];
+
+    // NEP-6 standard format: { name, accounts: [{ address, label, key, ... }] }
+    if (data.accounts && Array.isArray(data.accounts)) {
+      for (const acct of data.accounts) {
+        const label = acct.label || data.name || 'NEP-6 Import';
+        const address = acct.address;
+        if (!address) continue;
+        const w = walletService.importWallet(label, address, '');
+        imported.push(w);
+      }
+    }
+    // Array of wallet objects: [{ label, address, wif }, ...]
+    else if (Array.isArray(data)) {
+      for (const entry of data) {
+        const address = entry.address;
+        if (!address) continue;
+        const w = walletService.importWallet(entry.label || 'Imported', address, entry.wif || '');
+        imported.push(w);
+      }
+    }
+    // Single wallet object: { label, address, wif }
+    else if (data.address) {
+      const w = walletService.importWallet(data.label || 'Imported', data.address, data.wif || '');
+      imported.push(w);
+    }
+    else {
+      return res.status(400).json({ error: 'Unrecognized wallet JSON format. Expected NEP-6, an array of wallets, or a single { address, wif } object.' });
+    }
+
+    res.json({ imported: imported.length, wallets: imported });
+  } catch (err) {
+    res.status(500).json({ error: `Failed to import: ${err.message}` });
+  }
+};
+
 export const updateSelection = (req, res) => {
   const { walletIds } = req.body;
   const selected = walletService.updateSelection(walletIds || []);

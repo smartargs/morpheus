@@ -49,6 +49,43 @@ export function parseMarkdown(text) {
   // 3. Code Blocks: \`\`\`text\`\`\`
   html = html.replace(/```([\s\S]*?)```/g, '<pre class="my-3 p-3.5 rounded-xl bg-slate-900/5 dark:bg-black/20 border border-slate-200/50 dark:border-border/50 text-[12px] font-mono overflow-x-auto leading-relaxed shadow-inner">$1</pre>');
 
+  // 3b. Tables: | col | col | ... rows
+  html = html.replace(/((?:^\|.+\|[ ]*$\n?){2,})/gm, (tableBlock) => {
+    const rows = tableBlock.trim().split('\n').filter(r => r.trim());
+    // Need at least a header + separator + 1 data row, or header + data
+    if (rows.length < 2) return tableBlock;
+    
+    const parseRow = (row) => row.split('|').slice(1, -1).map(c => c.trim());
+    
+    // Detect separator row (|---|---|)
+    const isSeparator = (row) => /^\|[\s\-:|]+\|$/.test(row.trim());
+    const sepIndex = rows.findIndex(r => isSeparator(r));
+    
+    let headerRow, dataRows;
+    if (sepIndex === 1) {
+      headerRow = parseRow(rows[0]);
+      dataRows = rows.slice(2).map(parseRow);
+    } else {
+      // No separator — treat first row as header
+      headerRow = parseRow(rows[0]);
+      dataRows = rows.slice(1).filter(r => !isSeparator(r)).map(parseRow);
+    }
+
+    const thCells = headerRow.map(h => 
+      `<th class="px-3.5 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-neo-green whitespace-nowrap">${h}</th>`
+    ).join('');
+    
+    const bodyRows = dataRows.map((cells, i) => {
+      const zebra = i % 2 === 0 ? '' : 'bg-slate-50/50 dark:bg-white/[0.02]';
+      const tds = cells.map(c => 
+        `<td class="px-3.5 py-2 text-[13px] text-slate-700 dark:text-text-secondary whitespace-nowrap">${c}</td>`
+      ).join('');
+      return `<tr class="${zebra}">${tds}</tr>`;
+    }).join('');
+
+    return `<div class="my-3 overflow-x-auto rounded-xl border border-slate-200 dark:border-border"><table class="w-full border-collapse"><thead class="bg-slate-100/80 dark:bg-white/[0.04] border-b border-slate-200 dark:border-border"><tr>${thCells}</tr></thead><tbody class="divide-y divide-slate-100 dark:divide-border/50">${bodyRows}</tbody></table></div>`;
+  });
+
   // 4. Bold: **text**
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
@@ -87,8 +124,10 @@ export function parseMarkdown(text) {
   // Final cleanup: remove <br> immediately following or preceding modular blocks
   html = html.replace(/<\/div><br>/g, '</div>');
   html = html.replace(/<\/pre><br>/g, '</pre>');
+  html = html.replace(/<\/table><br>/g, '</table>');
   html = html.replace(/<br><div/g, '<div');
   html = html.replace(/<br><pre/g, '<pre');
+  html = html.replace(/<br><table/g, '<table');
 
   return html.trim();
 }

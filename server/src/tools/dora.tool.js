@@ -21,7 +21,7 @@ async function withRetry(action, maxRetries = 3, delay = 1000) {
 }
 
 export async function get_committee_info(args, session) {
-  const network = args.network || session?.settings?.network || 'mainnet';
+  const network = session?.settings?.network || args.network || 'mainnet';
   const url = `https://dora.coz.io/api/v2/neo3/${network}/committee`;
   
   return await withRetry(async () => {

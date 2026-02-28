@@ -21,7 +21,7 @@ async function withRetry(action, maxRetries = 3, delay = 1000) {
 }
 
 export async function get_statistics(args, session) {
-  const network = args.network || session?.settings?.network || 'mainnet';
+  const network = session?.settings?.network || args.network || 'mainnet';
   const baseUrl = network.toLowerCase() === 'testnet' 
     ? 'https://testnet.neo3scan.com/neotube-api'
     : 'https://www.neo3scan.com/neotube-api';
@@ -49,7 +49,7 @@ export async function get_statistics(args, session) {
 }
 
 export async function get_asset_infos(args, session) {
-  const network = args.network || session?.settings?.network || 'mainnet';
+  const network = session?.settings?.network || args.network || 'mainnet';
   const baseUrl = network.toLowerCase() === 'testnet' 
     ? 'https://testnet.neo3scan.com/neotube-api'
     : 'https://www.neo3scan.com/neotube-api';

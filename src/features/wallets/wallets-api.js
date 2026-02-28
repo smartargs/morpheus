@@ -21,6 +21,19 @@ export const walletsApi = {
     });
   },
 
+  async importJsonWallet(jsonData) {
+    const res = await fetch('/api/wallets/import-json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(jsonData),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Import failed');
+    }
+    return res.json();
+  },
+
   async updateWalletSelection(ids) {
     return fetch('/api/wallets/selection', {
       method: 'PUT',

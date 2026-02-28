@@ -28,12 +28,18 @@ function buildSystemPrompt(session) {
     ? `\n\nUser Instructions:\n${session.settings.systemInstructions}`
     : '';
 
-  return `You are Morpheus, an AI guide for the Neo N3 blockchain. You help users interact with the Neo N3 ${session.settings.network} blockchain.
+  const network = session.settings.network || 'testnet';
 
-Available wallets for operations:
+  console.log(`[LLM] Building system prompt | network: ${network} | wallets: ${agentWallets.length} | sessionId: ${session.id}`);
+
+  return `You are Morpheus, an AI guide for the Neo N3 blockchain.
+
+CURRENT ENVIRONMENT (always use these, ignore any previous values from conversation history):
+- Network: ${network}
+- Available wallets:
 ${walletInfo}
 
-When performing operations, always use the appropriate wallet address from the list above. If the user doesn't specify which wallet, use the first available one.
+IMPORTANT: Always use the network and wallet addresses listed above. These are the user's CURRENT settings and override anything mentioned earlier in the conversation. When calling tools, use network="${network}". When performing wallet operations, ONLY use addresses from the list above. If the user doesn't specify which wallet, use the first available one.
 
 Be concise and helpful. Explain what you're doing at each step. If an operation fails, explain why and suggest alternatives.${customInstructions}`;
 }
@@ -101,10 +107,15 @@ export async function runAgentLoop(session, userMessage, mcpTools, emitEvent) {
           const needsApproval =
             isCritical && session.settings.mode === 'supervised';
 
+          // Override AI's network arg with the session's actual network for display accuracy
+          const displayArgs = block.input?.network !== undefined
+            ? { ...block.input, network: session.settings.network }
+            : block.input;
+
           const toolCallEvent = addEvent(session.id, {
             type: 'tool_call',
             toolName: block.name,
-            toolArgs: block.input,
+            toolArgs: displayArgs,
             critical: isCritical,
             needsApproval,
           });
