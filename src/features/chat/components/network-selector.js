@@ -1,13 +1,23 @@
 import { state, updateState } from '../../../state.js';
 import { api } from '../../../shared/services/api.js';
 
-export function NetworkSelector() {
+export function NetworkSelector(isLocked = false) {
   const activeSession = state.sessions.find(s => s.id === state.activeSessionId);
   const currentNetwork = activeSession?.settings?.network || state.settings.network || 'testnet';
   const color = currentNetwork === 'mainnet' 
     ? (activeSession?.settings?.mainnetColor || state.settings.mainnetColor || '#ef4444') 
     : (activeSession?.settings?.testnetColor || state.settings.testnetColor || '#00e599');
   
+  if (isLocked) {
+    return `
+      <div class="flex items-center gap-2 px-2 py-1.5 text-[12px] font-medium text-slate-400 dark:text-text-muted opacity-80 cursor-default" title="Network is pinned for this session.">
+        <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${color}"></span>
+        <span class="tracking-tight capitalize">${currentNetwork}</span>
+        <svg class="w-3.5 h-3.5 opacity-40 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+    `;
+  }
+
   return `
     <div class="relative group" id="network-selector-container">
       <button id="network-selector-btn" class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-border/30 transition-all text-[12px] font-medium text-slate-500 dark:text-text-muted">

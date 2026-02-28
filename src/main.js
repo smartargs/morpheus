@@ -43,12 +43,18 @@ export async function renderGlobalSessionList(force = false) {
         dotColor = '#008055';
       }
 
+      const activeClass = active 
+        ? 'text-neo-green-readable shadow-sm' 
+        : 'text-slate-500 dark:text-text-secondary hover:bg-slate-200/50 dark:hover:bg-bg-card/50';
+      
+      const activeStyle = active 
+        ? `background-color: ${dotColor}1a; border: 1px solid ${dotColor}33; color: ${dotColor};` 
+        : '';
+
       return `
-        <div class="px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all cursor-pointer truncate flex items-center justify-between group ${
-          active 
-            ? 'bg-neo-green-readable/10 text-neo-green-readable border border-neo-green-readable/20 shadow-sm' 
-            : 'text-slate-500 dark:text-text-secondary hover:bg-slate-200/50 dark:hover:bg-bg-card/50'
-        }" data-id="${s.id}">
+        <div class="px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all cursor-pointer truncate flex items-center justify-between group ${activeClass}" 
+             style="${activeStyle}"
+             data-id="${s.id}">
           <div class="flex items-center gap-2 flex-1 truncate">
             <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background-color: ${dotColor}"></span>
             <span class="truncate">${s.name}</span>
@@ -82,9 +88,9 @@ export async function renderGlobalSessionList(force = false) {
 }
 
 // Global New Chat handler
-async function handleGlobalNewChat() {
+async function handleGlobalNewChat(network = 'mainnet') {
   try {
-    const newSession = await api.createSession('New Chat');
+    const newSession = await api.createSession('New Chat', network);
     state.sessions.unshift(newSession);
     updateState({ activeSessionId: newSession.id });
     localStorage.setItem('activeSessionId', newSession.id);
@@ -160,7 +166,30 @@ function initSidebar() {
     initThemeToggle(footer);
   }
 
-  document.getElementById('global-new-chat-btn')?.addEventListener('click', handleGlobalNewChat);
+  const newChatBtn = document.getElementById('global-new-chat-btn');
+  const dropdownToggle = document.getElementById('new-chat-dropdown-toggle');
+  const dropdownMenu = document.getElementById('new-chat-dropdown');
+  
+  newChatBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    handleGlobalNewChat('mainnet');
+  });
+
+  dropdownToggle?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownMenu?.classList.toggle('hidden');
+  });
+
+  document.addEventListener('click', () => dropdownMenu?.classList.add('hidden'));
+
+  document.querySelectorAll('.new-chat-opt').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const net = opt.dataset.network;
+      handleGlobalNewChat(net);
+      dropdownMenu?.classList.add('hidden');
+    });
+  });
 
   // Close sidebar on mobile navigation
   sidebar.querySelectorAll('.nav-link').forEach(link => {

@@ -5,8 +5,8 @@ export const list = (req, res) => {
 };
 
 export const create = (req, res) => {
-  const { name } = req.body;
-  const session = sessionService.createSession(name);
+  const { name, network } = req.body;
+  const session = sessionService.createSession(name, network);
   res.json(session);
 };
 

@@ -71,8 +71,8 @@ export async function renderSettings() {
         ${Button({ id: 'save-settings-btn', label: 'Save Settings', className: 'min-w-[150px] justify-center' })}
 
         <div class="pt-8 border-t border-slate-200 dark:border-border">
-          <label class="block text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-text-secondary mb-1">Available MCP Tools</label>
-          <p class="text-[13px] text-slate-500 dark:text-text-secondary mb-4">Functional modules that Morpheus can use to interact with the Neo N3 blockchain.</p>
+          <label class="block text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-text-secondary mb-1">Available Capabilities</label>
+          <p class="text-[13px] text-slate-500 dark:text-text-secondary mb-4">Functional modules that Morpheus can use to interact with the Neo N3 blockchain and various web services.</p>
           <div id="tools-list" class="space-y-2">
             <p class="text-[13px] text-slate-400 dark:text-text-muted">Loading tools...</p>
           </div>

@@ -100,6 +100,7 @@ export async function runAgentLoop(session, userMessage, mcpTools, emitEvent) {
           const textEvent = addEvent(session.id, {
             type: 'agent_message',
             content: block.text,
+            model: response.model // Capture exactly which model responded
           });
           emitEvent(textEvent);
         } else if (block.type === 'tool_use') {

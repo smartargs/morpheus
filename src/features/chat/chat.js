@@ -19,9 +19,10 @@ export async function renderChat() {
   await initSessions();
 
   const activeSession = state.sessions.find(s => s.id === state.activeSessionId);
-  let networkColor = activeSession?.settings?.network === 'mainnet' 
-    ? (activeSession.settings.mainnetColor || '#ff9800')
-    : (activeSession.settings.testnetColor || '#008055');
+  const network = activeSession?.settings?.network || 'testnet';
+  let networkColor = network === 'mainnet' 
+    ? (activeSession?.settings?.mainnetColor || state.settings.mainnetColor || '#ef4444')
+    : (activeSession?.settings?.testnetColor || state.settings.testnetColor || '#00e599');
 
   // If specific green is hard to read on light backgrounds, adjust it
   if (networkColor === '#00e599' && !document.documentElement.classList.contains('dark')) {
@@ -31,8 +32,8 @@ export async function renderChat() {
   app.innerHTML = `
     <div class="flex-1 flex flex-col h-full bg-white dark:bg-transparent min-w-0 transition-all">
       <div class="chat-header px-9 py-3 border-b border-slate-200 dark:border-border flex justify-between items-center transition-colors">
-        <div class="flex items-center gap-2">
-          <span class="text-neo-green-readable text-lg font-bold" style="color: ${networkColor}">◆</span>
+        <div class="flex items-center gap-2.5">
+          <div class="w-3 h-3 rounded-[3px] shadow-sm shrink-0" style="background-color: ${networkColor}"></div>
           <span class="font-bold text-slate-800 dark:text-text-primary truncate max-w-[300px]" id="active-session-name">Chat</span>
         </div>
         <div class="flex gap-2">
@@ -46,7 +47,7 @@ export async function renderChat() {
         </div>
       </div>
 
-      <div class="flex-1 flex flex-col border-[3px] bg-white dark:bg-bg-secondary shadow-md overflow-hidden min-w-0 transition-all" style="border-color: ${networkColor}">
+      <div class="flex-1 flex flex-col border-[3px] bg-white dark:bg-bg-secondary shadow-md overflow-hidden min-w-0 transition-all" style="border-color: ${networkColor}66">
         <div class="chat-messages flex-1 overflow-y-auto px-[17px] py-6 flex flex-col gap-4" id="chat-messages">
           <div class="flex-1 flex items-center justify-center opacity-50"><div class="animate-pulse">Loading conversation...</div></div>
         </div>
@@ -62,12 +63,9 @@ export async function renderChat() {
               className: 'min-h-[60px] max-h-[160px] border-none bg-transparent focus:ring-0 focus:border-none rounded-t-2xl px-5 py-4 text-[15px] leading-relaxed text-slate-800 dark:text-text-primary shadow-none'
             })}
             
-            <!-- Bottom Tool Bar -->
             <div class="flex items-center justify-between px-3 py-2 border-t border-slate-200 dark:border-border/30 bg-slate-50/50 dark:bg-white/5 rounded-b-2xl">
               <div class="flex items-center gap-1">
                 ${WalletSelector()}
-                <div class="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1"></div>
-                ${NetworkSelector()}
                 <div class="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1"></div>
                 ${ModelSelector()}
               </div>
@@ -82,7 +80,8 @@ export async function renderChat() {
                 ${Button({
                   id: 'send-btn',
                   variant: 'primary',
-                  className: 'w-10 h-10 rounded-xl flex items-center justify-center p-0 shadow-lg shadow-neo-green/20 ring-1 ring-white/10',
+                  className: 'w-10 h-10 rounded-xl flex items-center justify-center p-0 shadow-lg ring-1 ring-white/10',
+                  style: `background-color: ${networkColor}; color: ${network === 'mainnet' ? 'white' : 'black'}; box-shadow: 0 10px 15px -3px ${networkColor}40`,
                   icon: '<svg class="w-5 h-5 translate-x-[1px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>'
                 })}
               </div>
@@ -96,12 +95,6 @@ export async function renderChat() {
   initChatListeners();
   initWalletSelector();
   initModelSelector();
-  initNetworkSelector(() => {
-    // Refresh the whole chat view to update colors
-    renderChat();
-    // Also refresh global list to sync indicator
-    import('../../main.js').then(m => m.renderGlobalSessionList());
-  });
   await loadActiveSession();
 }
 
@@ -116,7 +109,7 @@ async function initSessions() {
     state.activeSessionId = sessions[0].id;
     localStorage.setItem('activeSessionId', state.activeSessionId);
   } else if (!state.activeSessionId || !sessions.find(s => s.id === state.activeSessionId)) {
-    const newSession = await api.createSession('New Chat');
+    const newSession = await api.createSession('New Chat', 'mainnet');
     state.sessions = [newSession];
     state.activeSessionId = newSession.id;
     localStorage.setItem('activeSessionId', state.activeSessionId);
@@ -147,11 +140,25 @@ function initChatListeners() {
   deleteBtn?.addEventListener('click', async () => {
     if (confirm('Delete this chat permanently?')) {
       const idToDelete = state.activeSessionId;
-      await api.deleteSession(idToDelete);
-      state.sessions = state.sessions.filter(s => s.id !== idToDelete);
-      state.activeSessionId = state.sessions[0]?.id || null;
-      localStorage.setItem('activeSessionId', state.activeSessionId);
-      location.reload();
+      try {
+        await api.deleteSession(idToDelete);
+        
+        // Update state locally
+        state.sessions = state.sessions.filter(s => s.id !== idToDelete);
+        state.activeSessionId = state.sessions[0]?.id || null;
+        localStorage.setItem('activeSessionId', state.activeSessionId);
+        
+        // Refresh sidebar list without full reload
+        import('../../main.js').then(m => {
+          if (m.renderGlobalSessionList) m.renderGlobalSessionList();
+        });
+        
+        // Refresh chat view
+        await renderChat();
+      } catch (err) {
+        console.error('Failed to delete chat:', err);
+        alert('Failed to delete chat session.');
+      }
     }
   });
 
@@ -226,18 +233,23 @@ async function loadActiveSession() {
 function renderEvents(container, events) {
   container.innerHTML = '';
   
+  const activeSession = state.sessions.find(s => s.id === state.activeSessionId);
+  const network = activeSession?.settings?.network || 'testnet';
+  const networkDisplay = network.charAt(0).toUpperCase() + network.slice(1);
+  const networkColor = network === 'mainnet' ? '#ef4444' : '#00e599';
+
   if (events.length === 0) {
     container.innerHTML = EmptyState({
       id: 'chat-empty',
       icon: '◆',
       title: 'Morpheus',
-      message: 'Ask me anything about the Neo N3 blockchain — check balances, transfer assets, or navigate the Matrix.'
+      message: `I'm ready to help you on <span class="font-bold" style="color: ${networkColor}">${networkDisplay}</span>. Ask me anything about the Neo N3 blockchain — check balances, transfer assets, or navigate the Matrix.`
     });
     return;
   }
 
   events.forEach(ev => {
-    if (ev.type === 'agent_message') appendBubble(container, 'assistant', ev.content);
+    if (ev.type === 'agent_message') appendBubble(container, 'assistant', ev.content, { model: ev.model });
     else if (ev.type === 'user_message' || ev.role === 'user') appendBubble(container, 'user', ev.content);
     else if (ev.type === 'tool_call') appendToolCall(container, ev);
     else if (ev.type === 'tool_result' || ev.type === 'tool_error') updateToolResult(container, ev);
@@ -305,21 +317,45 @@ export function updateStopBtn() {
   }
 }
 
-export function appendBubble(container, role, text) {
+export function appendBubble(container, role, text, options = {}) {
   if (!container) return;
   const wrapper = document.createElement('div');
-  wrapper.className = `flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-slide`;
+  wrapper.className = `flex w-full mb-1 ${role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-slide`;
   
+  const activeSession = state.sessions.find(s => s.id === state.activeSessionId);
+  const network = activeSession?.settings?.network || 'testnet';
+  const networkColor = network === 'mainnet' 
+    ? (activeSession?.settings?.mainnetColor || state.settings.mainnetColor || '#ef4444')
+    : (activeSession?.settings?.testnetColor || state.settings.testnetColor || '#00e599');
+
+  const containerDiv = document.createElement('div');
+  containerDiv.className = `max-w-[85%] md:max-w-[75%] flex flex-col ${role === 'user' ? 'items-end' : 'items-start'}`;
+
+  // Mini label for model if available
+  if (role === 'assistant' && options.model) {
+     const modelLabel = document.createElement('div');
+     modelLabel.className = 'text-[9.5px] font-bold tracking-tight uppercase text-slate-400 dark:text-text-muted mb-1 ml-2 opacity-80';
+     modelLabel.textContent = options.model;
+     containerDiv.appendChild(modelLabel);
+  }
+
   const div = document.createElement('div');
-  div.className = `max-w-[85%] md:max-w-[75%] px-4 py-3 rounded-2xl text-[14.5px] leading-relaxed shadow-sm ${
+  const userDarkStyle = `background: linear-gradient(135deg, ${networkColor}15, ${networkColor}05); border: 1px solid ${networkColor}25;`;
+  
+  div.className = `w-full px-4 py-3 rounded-2xl text-[14.5px] leading-relaxed shadow-sm ${
     role === 'user' 
-      ? 'bg-slate-900 text-white dark:bg-gradient-to-br dark:from-[#1a3a2d] dark:to-[#14302b] dark:border dark:border-[#00e599]/15 rounded-br-sm shadow-lg shadow-black/5' 
+      ? 'bg-slate-900 text-white dark:bg-slate-900 rounded-br-sm shadow-lg shadow-black/5' 
       : 'bg-slate-100 dark:bg-bg-card text-slate-800 dark:text-text-primary border border-slate-200 dark:border-border rounded-bl-sm'
   }`;
+
+  if (role === 'user') {
+    div.setAttribute('style', userDarkStyle);
+  }
   
   div.innerHTML = role === 'assistant' ? parseMarkdown(text) : esc(text);
   
-  wrapper.appendChild(div);
+  containerDiv.appendChild(div);
+  wrapper.appendChild(containerDiv);
   container.appendChild(wrapper);
   container.scrollTop = container.scrollHeight;
 }

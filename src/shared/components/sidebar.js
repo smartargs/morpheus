@@ -1,0 +1,256 @@
+import { state, updateState } from '../../state.js';
+import { api } from '../services/api.js';
+import { formatTimeAgo } from '../utils/helpers.js';
+import { ThemeToggle, initThemeToggle } from './theme-toggle.js';
+import { renderChat } from '../../features/chat/chat.js';
+
+export function Sidebar() {
+  return `
+    <nav class="lg:w-64 w-64 lg:static fixed inset-y-0 left-0 z-[70] bg-slate-50 dark:bg-bg-sidebar border-r border-slate-200 dark:border-border flex flex-col py-5 transition-transform duration-300 -translate-x-full lg:translate-x-0" id="sidebar">
+      <div class="flex items-center justify-between px-5 pb-6 border-b border-slate-200 dark:border-border mb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="text-2xl text-neo-green-readable drop-shadow-[0_0_6px_rgba(0,128,85,0.1)] dark:drop-shadow-[0_0_6px_rgba(0,229,153,0.3)]">◆</div>
+          <span class="text-xl font-bold tracking-tight bg-gradient-to-br from-neo-green-readable to-[#00b377] dark:from-neo-green dark:to-[#66ffcc] bg-clip-text text-transparent">Morpheus</span>
+        </div>
+        <button id="sidebar-close" class="lg:hidden text-slate-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="px-3 mb-6">
+        <div class="relative" id="new-chat-container">
+          <div class="flex items-stretch shadow-lg shadow-neo-green/10 hover:shadow-neo-green/20 transition-all rounded-xl overflow-hidden">
+            <button id="global-new-chat-btn" class="flex-1 flex items-center justify-center gap-2 h-11 bg-neo-green text-black font-bold transition-all active:scale-[0.98] group">
+              <svg class="w-4.5 h-4.5 transition-transform group-hover:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span class="text-[13.5px]">New Chat</span>
+            </button>
+            <div class="w-px h-6 self-center bg-black/10"></div>
+            <button id="new-chat-dropdown-toggle" class="w-10 h-11 bg-neo-green text-black font-bold transition-all active:scale-[0.98] flex items-center justify-center">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+          </div>
+          
+          <div id="new-chat-dropdown" class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-bg-card border border-slate-200 dark:border-border rounded-xl shadow-xl hidden z-[80] overflow-hidden animate-fade-slide">
+            <div class="p-1.5 flex flex-col gap-1">
+              <button class="new-chat-opt w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-[13px] font-bold text-slate-700 dark:text-text-primary" data-network="mainnet">
+                <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${state.settings.mainnetColor || '#ef4444'}"></span>
+                <span>Mainnet</span>
+              </button>
+              <button class="new-chat-opt w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-[13px] font-bold text-slate-700 dark:text-text-primary" data-network="testnet">
+                <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${state.settings.testnetColor || '#00e599'}"></span>
+                <span>Testnet</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="px-3 space-y-0.5">
+        <li>
+          <a href="#chat" class="nav-link" data-page="chat">
+            <svg class="w-5 h-5 flex-shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Chat</span>
+          </a>
+        </li>
+        <li>
+          <a href="#wallets" class="nav-link" data-page="wallets">
+            <svg class="w-5 h-5 flex-shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="M2 10h20" />
+              <path d="M16 14h2" />
+            </svg>
+            <span>Wallets</span>
+          </a>
+        </li>
+        <li>
+          <a href="#history" class="nav-link" data-page="history">
+            <svg class="w-5 h-5 flex-shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span>History</span>
+          </a>
+        </li>
+        <li>
+          <a href="#settings" class="nav-link" data-page="settings">
+            <svg class="w-5 h-5 flex-shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            <span>Settings</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="px-3 py-2 mt-4 border-t border-slate-200 dark:border-border/30 flex-1 flex flex-col min-h-0 overflow-hidden group">
+        <div class="flex items-center justify-between mb-3 px-2">
+          <h3 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-text-muted">Recent Chats</h3>
+        </div>
+        <div id="global-session-list" class="flex-1 overflow-y-auto space-y-1 min-h-0 pr-1">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+      
+      <div class="px-5 py-4 border-t border-slate-200 dark:border-border" id="sidebar-footer">
+        <!-- Theme Toggle rendered here -->
+      </div>
+    </nav>
+  `;
+}
+
+export async function renderGlobalSessionList(force = false) {
+  const container = document.getElementById('global-session-list');
+  if (!container) return;
+
+  try {
+    let sessions = state.sessions;
+    if (force || sessions.length === 0) {
+      sessions = await api.getSessions();
+      updateState({ sessions });
+    }
+    
+    if (!state.activeSessionId && sessions.length > 0) {
+      updateState({ activeSessionId: sessions[0].id });
+      localStorage.setItem('activeSessionId', sessions[0].id);
+    }
+
+    container.innerHTML = sessions.map(s => {
+      const active = s.id === state.activeSessionId;
+      const timeHint = formatTimeAgo(s.updatedAt);
+      
+      const network = s.settings?.network || 'testnet';
+      let dotColor = network === 'mainnet' 
+        ? (s.settings.mainnetColor || state.settings.mainnetColor || '#ef4444') 
+        : (s.settings.testnetColor || state.settings.testnetColor || '#008055');
+
+      if (dotColor === '#00e599' && !document.documentElement.classList.contains('dark')) {
+        dotColor = '#008055';
+      }
+
+      const activeClass = active 
+        ? 'text-neo-green-readable shadow-sm' 
+        : 'text-slate-500 dark:text-text-secondary hover:bg-slate-200/50 dark:hover:bg-bg-card/50';
+      
+      const activeStyle = active 
+        ? `background-color: \${dotColor}1a; border: 1px solid \${dotColor}33; color: \${dotColor};` 
+        : '';
+
+      return `
+        <div class="px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all cursor-pointer truncate flex items-center justify-between group \${activeClass}" 
+             style="\${activeStyle}"
+             data-id="\${s.id}">
+          <div class="flex items-center gap-2 flex-1 truncate">
+            <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background-color: \${dotColor}"></span>
+            <span class="truncate">\${s.name}</span>
+          </div>
+          \${timeHint ? \`<span class="text-[10px] opacity-60 font-normal ml-2 shrink-0">\${timeHint}</span>\` : ''}
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('[data-id]').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = el.dataset.id;
+        if (id === state.activeSessionId && state.currentPage === 'chat') return;
+        
+        updateState({ activeSessionId: id });
+        localStorage.setItem('activeSessionId', id);
+        
+        if (state.currentPage !== 'chat') {
+           location.hash = '#chat';
+        } else {
+           renderChat();
+        }
+        renderGlobalSessionList();
+      });
+    });
+    return sessions;
+  } catch (err) {
+    console.error('Failed to load sessions:', err);
+    return [];
+  }
+}
+
+export async function handleGlobalNewChat(network = 'mainnet') {
+  try {
+    const newSession = await api.createSession('New Chat', network);
+    state.sessions.unshift(newSession);
+    updateState({ activeSessionId: newSession.id });
+    localStorage.setItem('activeSessionId', newSession.id);
+    
+    if (state.currentPage !== 'chat') {
+       location.hash = '#chat';
+    } else {
+       renderChat();
+    }
+    renderGlobalSessionList();
+  } catch (err) {
+    console.error('Failed to create new chat:', err);
+  }
+}
+
+export function initSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const toggle = document.getElementById('sidebar-toggle');
+  const close = document.getElementById('sidebar-close');
+  const overlay = document.getElementById('sidebar-overlay');
+  
+  if (!sidebar) return;
+
+  const toggleSidebar = () => {
+    const isOpen = sidebar.classList.toggle('open');
+    sidebar.classList.toggle('-translate-x-full');
+    overlay?.classList.toggle('hidden');
+    
+    if (toggle) {
+      toggle.style.display = isOpen ? 'none' : 'flex';
+    }
+  };
+
+  toggle?.addEventListener('click', toggleSidebar);
+  close?.addEventListener('click', toggleSidebar);
+  overlay?.addEventListener('click', toggleSidebar);
+
+  const footer = document.getElementById('sidebar-footer');
+  if (footer) {
+    footer.innerHTML = ThemeToggle();
+    initThemeToggle(footer);
+  }
+
+  const newChatBtn = document.getElementById('global-new-chat-btn');
+  const dropdownToggle = document.getElementById('new-chat-dropdown-toggle');
+  const dropdownMenu = document.getElementById('new-chat-dropdown');
+  
+  newChatBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    handleGlobalNewChat('mainnet');
+  });
+
+  dropdownToggle?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownMenu?.classList.toggle('hidden');
+  });
+
+  document.addEventListener('click', () => dropdownMenu?.classList.add('hidden'));
+
+  document.querySelectorAll('.new-chat-opt').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const net = opt.dataset.network;
+      handleGlobalNewChat(net);
+      dropdownMenu?.classList.add('hidden');
+    });
+  });
+
+  sidebar.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (overlay && !overlay.classList.contains('hidden')) toggleSidebar();
+    });
+  });
+}

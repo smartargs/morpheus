@@ -3,8 +3,7 @@ import db from '../database/sqlite.js';
 
 const sessions = new Map();
 const globalSettings = {
-  network: 'testnet',
-  model: 'claude-sonnet-4-6',
+  network: 'mainnet',
   testnetColor: '#008055',
   mainnetColor: '#ef4444',
   theme: 'dark',
@@ -40,7 +39,7 @@ export function loadSessions() {
   for (const row of rows) {
     const sSettings = JSON.parse(row.settings);
     // Clean up any global settings that might have leaked into session settings
-    const globalKeys = ['network', 'model', 'testnetColor', 'mainnetColor', 'theme', 'systemInstructions'];
+    const globalKeys = ['network', 'testnetColor', 'mainnetColor', 'theme', 'systemInstructions'];
     globalKeys.forEach(key => delete sSettings[key]);
     
     sessions.set(row.id, {
@@ -60,7 +59,9 @@ export function loadSessions() {
 const globalSettingsStmt = db.prepare('SELECT * FROM global_settings LIMIT 1');
 const globalSettingsRow = globalSettingsStmt.get();
 if (globalSettingsRow) {
-  Object.assign(globalSettings, JSON.parse(globalSettingsRow.value));
+  const loaded = JSON.parse(globalSettingsRow.value);
+  delete loaded.model; // Ensure old global model setting doesn't leak
+  Object.assign(globalSettings, loaded);
 } else {
   // Initialize default global settings
   persistGlobalSettings();
@@ -86,7 +87,7 @@ export function listSessions() {
   })).sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
-export function createSession(name) {
+export function createSession(name, network = 'mainnet') {
   const id = uuidv4();
   const shortId = generateShortId();
   const session = {
@@ -97,6 +98,7 @@ export function createSession(name) {
     settings: {
       mode: 'supervised',
       selectedWalletIds: [],
+      network: network, // Pin the network for this session
     },
     abortController: null,
     pendingApproval: null,
@@ -114,7 +116,7 @@ export function getSession(id) {
 }
 
 export function getOrCreateDefaultSession() {
-  if (sessions.size === 0) return createSession();
+  if (sessions.size === 0) return createSession(null, 'mainnet');
   return Array.from(sessions.values()).sort((a, b) => b.updatedAt - a.updatedAt)[0];
 }
 
@@ -177,7 +179,7 @@ export function updateSettings(sessionId, newSettings) {
   if (!session) return;
   
   // Extract global settings
-  const globalKeys = ['network', 'model', 'testnetColor', 'mainnetColor', 'theme', 'systemInstructions'];
+  const globalKeys = ['network', 'testnetColor', 'mainnetColor', 'theme', 'systemInstructions'];
   let globalChanged = false;
   globalKeys.forEach(key => {
     if (key in newSettings) {

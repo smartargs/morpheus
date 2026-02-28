@@ -57,7 +57,7 @@ function handleEvent(event) {
     case 'agent_message':
       if (chatMessages) {
         chatFeature.removeThinking(chatMessages);
-        chatFeature.appendBubble(chatMessages, 'assistant', event.content);
+        chatFeature.appendBubble(chatMessages, 'assistant', event.content, { model: event.model });
       }
       break;
 

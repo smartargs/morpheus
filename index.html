@@ -102,23 +102,75 @@
             </svg>
           </button>
         </div>
-        <div class="px-3 mb-4">
-          <button
-            id="global-new-chat-btn"
-            class="w-full flex items-center justify-center gap-2 py-3 bg-neo-green text-black font-bold rounded-xl shadow-lg shadow-neo-green/10 hover:shadow-neo-green/20 transition-all active:scale-[0.98] group"
-          >
-            <svg
-              class="w-5 h-5 transition-transform group-hover:rotate-90"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
+        <div class="px-3 mb-6">
+          <div class="relative" id="new-chat-container">
+            <div
+              class="flex items-stretch shadow-lg shadow-neo-green/10 hover:shadow-neo-green/20 transition-all rounded-xl overflow-hidden"
             >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            <span>New Chat</span>
-          </button>
+              <button
+                id="global-new-chat-btn"
+                class="flex-1 flex items-center justify-center gap-2 h-11 bg-neo-green text-black font-bold transition-all active:scale-[0.98] group"
+              >
+                <svg
+                  class="w-4.5 h-4.5 transition-transform group-hover:rotate-90"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                <span class="text-[13.5px]">New Chat</span>
+              </button>
+              <div class="w-px h-6 self-center bg-black/10"></div>
+              <button
+                id="new-chat-dropdown-toggle"
+                class="w-10 h-11 bg-neo-green text-black font-bold transition-all active:scale-[0.98] flex items-center justify-center"
+              >
+                <svg
+                  class="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+            </div>
+
+            <div
+              id="new-chat-dropdown"
+              class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-bg-card border border-slate-200 dark:border-border rounded-xl shadow-xl hidden z-[80] overflow-hidden animate-fade-slide"
+            >
+              <div class="p-1.5 flex flex-col gap-1">
+                <button
+                  class="new-chat-opt w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-[13px] font-bold text-slate-700 dark:text-text-primary"
+                  data-network="mainnet"
+                >
+                  <span
+                    class="w-1.5 h-1.5 rounded-full"
+                    style="background-color: #ef4444"
+                  ></span>
+                  <span>Mainnet</span>
+                </button>
+                <button
+                  class="new-chat-opt w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-[13px] font-bold text-slate-700 dark:text-text-primary"
+                  data-network="testnet"
+                >
+                  <span
+                    class="w-1.5 h-1.5 rounded-full"
+                    style="background-color: #00e599"
+                  ></span>
+                  <span>Testnet</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
+
         <ul class="flex-1 px-3 space-y-0.5">
           <li>
             <a href="#chat" class="nav-link" data-page="chat">
@@ -204,7 +256,7 @@
 
         <!-- Global Chat List -->
         <div
-          class="px-3 py-2 mt-4 border-t border-slate-200 dark:border-border flex-1 flex flex-col min-h-0 overflow-hidden group"
+          class="px-3 py-2 mt-4 border-t border-slate-200 dark:border-border/30 flex-1 flex flex-col min-h-0 overflow-hidden group"
         >
           <div class="flex items-center justify-between mb-3 px-2">
             <h3
@@ -254,13 +306,45 @@
           <button class="btn-danger text-sm font-semibold" id="approval-reject">
             Reject
           </button>
-          <button class="btn-primary text-sm" id="approval-approve">
-            Approve
+          <button
+            class="btn-primary text-sm font-semibold"
+            id="approval-confirm"
+          >
+            Confirm Action
           </button>
         </div>
       </div>
     </div>
 
     <script type="module" src="/src/main.js"></script>
+    <script>
+      // Handle the sidebar responsive logic here as a fallback
+      const toggle = document.getElementById("sidebar-toggle");
+      const sidebar = document.getElementById("sidebar");
+      const close = document.getElementById("sidebar-close");
+      const overlay = document.getElementById("sidebar-overlay");
+
+      if (toggle && sidebar) {
+        toggle.addEventListener("click", () => {
+          sidebar.classList.add("open");
+          sidebar.classList.remove("-translate-x-full");
+          overlay.classList.remove("hidden");
+        });
+      }
+      if (close && sidebar) {
+        close.addEventListener("click", () => {
+          sidebar.classList.remove("open");
+          sidebar.classList.add("-translate-x-full");
+          overlay.classList.add("hidden");
+        });
+      }
+      if (overlay && sidebar) {
+        overlay.addEventListener("click", () => {
+          sidebar.classList.remove("open");
+          sidebar.classList.add("-translate-x-full");
+          overlay.classList.add("hidden");
+        });
+      }
+    </script>
   </body>
 </html>

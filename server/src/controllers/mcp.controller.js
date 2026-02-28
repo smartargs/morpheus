@@ -1,9 +1,8 @@
-import * as mcpService from '../services/mcp.service.js';
+import { LOCAL_TOOL_DEFINITIONS } from '../tools/definitions.js';
 
 export const listTools = async (req, res) => {
   try {
-    const tools = await mcpService.listTools();
-    res.json(tools);
+    res.json(LOCAL_TOOL_DEFINITIONS);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

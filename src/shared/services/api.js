@@ -21,11 +21,11 @@ export const api = {
     return res.json();
   },
 
-  async createSession(name) {
+  async createSession(name, network) {
     const res = await fetch('/api/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, network }),
     });
     return res.json();
   },

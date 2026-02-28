@@ -64,7 +64,6 @@ export function initModelSelector() {
           if (!activeSession.settings) activeSession.settings = {};
           
           activeSession.settings.model = modelId;
-          state.settings.model = modelId;
           
           const label = button.querySelector('span:not(.text-base)').textContent;
           const icon = button.querySelector('.text-base').textContent;
