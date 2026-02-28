@@ -35,7 +35,7 @@
       class="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-bg-sidebar border-b border-slate-200 dark:border-border z-50 flex items-center justify-between px-4"
     >
       <div class="flex items-center gap-2">
-        <span class="text-neo-green font-bold text-lg">◆</span>
+        <span class="text-neo-green-readable font-bold text-lg">◆</span>
         <span class="font-bold tracking-tight">Assistant</span>
       </div>
 
@@ -77,12 +77,12 @@
         >
           <div class="flex items-center gap-2.5">
             <div
-              class="text-2xl text-neo-green drop-shadow-[0_0_6px_rgba(0,229,153,0.3)]"
+              class="text-2xl text-neo-green-readable drop-shadow-[0_0_6px_rgba(0,128,85,0.1)] dark:drop-shadow-[0_0_6px_rgba(0,229,153,0.3)]"
             >
               ◆
             </div>
             <span
-              class="text-xl font-bold tracking-tight bg-gradient-to-br from-neo-green to-[#66ffcc] bg-clip-text text-transparent"
+              class="text-xl font-bold tracking-tight bg-gradient-to-br from-neo-green-readable to-[#00b377] dark:from-neo-green dark:to-[#66ffcc] bg-clip-text text-transparent"
               >Morpheus</span
             >
           </div>
@@ -221,48 +221,10 @@
           </div>
         </div>
         <div
-          class="px-5 py-4 border-t border-slate-200 dark:border-border space-y-3"
+          class="px-5 py-4 border-t border-slate-200 dark:border-border"
+          id="sidebar-footer"
         >
-          <div class="flex items-center justify-between">
-            <button
-              id="theme-cycle"
-              class="p-2 bg-slate-100 dark:bg-bg-card rounded-md text-slate-500 dark:text-text-secondary hover:text-neo-green transition-colors"
-              title="Toggle Theme"
-            >
-              <svg
-                id="theme-icon-light"
-                class="w-5 h-5 hidden"
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                ></path>
-              </svg>
-              <svg
-                id="theme-icon-dark"
-                class="w-5 h-5 hidden"
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                ></path>
-              </svg>
-            </button>
-          </div>
+          <!-- Theme Toggle rendered here -->
         </div>
       </nav>
 
@@ -273,9 +235,8 @@
       ></main>
     </div>
 
-    <!-- Approval Modal -->
     <div
-      class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-[modalFadeIn_0.2s_ease]"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center lg:pl-64 z-[100] animate-[modalFadeIn_0.2s_ease]"
       id="approval-modal"
       style="display: none"
     >

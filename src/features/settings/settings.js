@@ -150,6 +150,20 @@ function initSettingsListeners() {
   const updateHexLabel = (inputEl) => {
     const label = inputEl.nextElementSibling;
     if (label) label.textContent = inputEl.value;
+    
+    // Sync to all sessions for live preview
+    const isMainnet = inputEl.id === 'mainnet-color';
+    if (isMainnet) state.settings.mainnetColor = inputEl.value;
+    else state.settings.testnetColor = inputEl.value;
+
+    state.sessions.forEach(session => {
+      if (!session.settings) session.settings = {};
+      if (isMainnet) session.settings.mainnetColor = inputEl.value;
+      else session.settings.testnetColor = inputEl.value;
+    });
+
+    // Re-render sidebar to show changes immediately for all chats
+    import('../../main.js').then(m => m.renderGlobalSessionList());
   };
 
   document.getElementById('mainnet-color')?.addEventListener('input', (e) => updateHexLabel(e.target));

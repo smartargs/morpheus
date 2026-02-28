@@ -4,7 +4,6 @@ import db from '../database/sqlite.js';
 import * as neonService from './neonjs.service.js';
 
 const wallets = new Map();
-const selectedWalletIds = new Set();
 
 // Persistence Helpers
 function persistWallet(w) {
@@ -28,14 +27,14 @@ export function loadWallets() {
  */
 
 export function listWallets() {
-  return Array.from(wallets.values()).map((w) => ({
-    ...w,
-    selected: selectedWalletIds.has(w.id),
-  }));
+  return Array.from(wallets.values());
 }
 
-export function getSelectedWallets() {
-  return Array.from(wallets.values()).filter((w) => selectedWalletIds.has(w.id));
+export function getWalletsByIds(walletIds = []) {
+  if (!walletIds || !Array.isArray(walletIds)) return [];
+  return walletIds
+    .map(id => wallets.get(id))
+    .filter(Boolean);
 }
 
 export async function createWallet(label = 'New Wallet') {
@@ -84,43 +83,69 @@ export function removeWallet(id) {
   const deleted = wallets.delete(id);
   if (deleted) {
     db.prepare('DELETE FROM wallets WHERE id = ?').run(id);
-    selectedWalletIds.delete(id);
   }
   return deleted;
 }
 
-export function updateSelection(walletIds = []) {
-  selectedWalletIds.clear();
-  for (const id of walletIds) {
-    if (wallets.has(id)) selectedWalletIds.add(id);
-  }
-  return getSelectedWallets();
+export function updateWallet(id, updates) {
+  const w = wallets.get(id);
+  if (!w) return null;
+
+  const updated = { ...w, ...updates };
+  wallets.set(id, updated);
+  persistWallet(updated);
+  return updated;
 }
 
 /**
  * Data Aggregation & Logic
  */
 
-export async function getBalance(address) {
+import * as rpcService from './rpc.service.js';
+
+export async function fetchNetworkBalances(address, network = 'testnet') {
   try {
-    const result = await callTool('get_balance', { address });
-    const content = result.content?.[0]?.text;
+    // Fetch NEP-17 balances
+    const nep17Data = await rpcService.withRpcFailover(network, 'getnep17balances', [address]);
+    const nep17Raw = Array.isArray(nep17Data?.balance) ? nep17Data.balance : [];
+    
+    // Filter out 0 balances (some nodes return them)
+    const nep17 = nep17Raw.filter(b => b.amount && b.amount !== '0');
+    
+    // Fetch NEP-11 balances (NFTs)
+    let nep11Raw = [];
     try {
-      return JSON.parse(content);
-    } catch {
-      return { raw: content };
+      const nep11Data = await rpcService.withRpcFailover(network, 'getnep11balances', [address]);
+      nep11Raw = Array.isArray(nep11Data?.balance) ? nep11Data.balance : [];
+    } catch (e) {
+      console.warn(`[WalletService] NEP-11 fetch failed on ${network}:`, e.message);
     }
-  } catch {
-    return { neo: '—', gas: '—', error: 'Could not fetch balance' };
+
+    // Filter out 0 balances for NFTs too
+    const nep11 = nep11Raw.filter(b => b.amount && b.amount !== '0');
+
+    return { nep17, nep11 };
+  } catch (err) {
+    console.warn(`[WalletService] Balance fetch failed on ${network} for ${address}:`, err.message);
+    return { nep17: [], nep11: [], error: err.message };
   }
+}
+
+export async function getBalancesForAddress(address) {
+  const [testnet, mainnet] = await Promise.all([
+    fetchNetworkBalances(address, 'testnet'),
+    fetchNetworkBalances(address, 'mainnet')
+  ]);
+
+  return { testnet, mainnet };
 }
 
 export async function listWalletsWithBalances() {
   const all = listWallets();
   return await Promise.all(
     all.map(async (w) => {
-      const balance = await getBalance(w.address);
-      return { ...w, balance };
+      const balances = await getBalancesForAddress(w.address);
+      return { ...w, balances };
     })
   );
 }

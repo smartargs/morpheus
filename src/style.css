@@ -7,6 +7,7 @@
   --color-neo-green: #00E599;
   --color-neo-green-dim: #00c983;
   --color-neo-green-glow: rgba(0, 229, 153, 0.15);
+  --color-neo-green-readable: #008055;
   
   --color-bg-primary: #0a0a0f;
   --color-bg-secondary: #111118;
@@ -30,6 +31,10 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
+}
+
+.dark {
+  --color-neo-green-readable: #00E599;
 }
 
 @layer base {
@@ -63,7 +68,7 @@
   }
 
   .nav-link.active {
-    @apply bg-neo-green/10 dark:bg-neo-green-glow text-neo-green;
+    @apply bg-neo-green/10 dark:bg-neo-green-glow text-neo-green-readable;
   }
 
   /* Transition for mobile sidebar */

@@ -33,12 +33,4 @@ export const walletsApi = {
     }
     return res.json();
   },
-
-  async updateWalletSelection(ids) {
-    return fetch('/api/wallets/selection', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ walletIds: ids }),
-    });
-  }
 };

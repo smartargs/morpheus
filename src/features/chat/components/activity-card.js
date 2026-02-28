@@ -12,7 +12,7 @@ export function ActivityCard({ event }) {
         <div class="flex items-center gap-3.5 min-w-0 h-full">
           <span class="text-xl flex-none leading-none flex items-center justify-center">${statusIcon}</span>
           <div class="flex flex-col justify-center min-w-0 overflow-hidden h-full">
-            <span class="text-[11px] font-bold text-neo-green uppercase tracking-widest leading-tight truncate mb-0.5">${esc(toolName)}</span>
+            <span class="text-[11px] font-bold text-neo-green-readable uppercase tracking-widest leading-tight truncate mb-0.5">${esc(toolName)}</span>
             <span class="text-[12px] text-slate-500 dark:text-text-secondary leading-tight activity-status italic">Executing...</span>
           </div>
         </div>

@@ -19,15 +19,20 @@ export async function renderChat() {
   await initSessions();
 
   const activeSession = state.sessions.find(s => s.id === state.activeSessionId);
-  const networkColor = activeSession?.settings?.network === 'mainnet' 
+  let networkColor = activeSession?.settings?.network === 'mainnet' 
     ? (activeSession.settings.mainnetColor || '#ff9800')
-    : (activeSession.settings.testnetColor || '#00e599');
+    : (activeSession.settings.testnetColor || '#008055');
+
+  // If specific green is hard to read on light backgrounds, adjust it
+  if (networkColor === '#00e599' && !document.documentElement.classList.contains('dark')) {
+     networkColor = '#008055'; 
+  }
 
   app.innerHTML = `
     <div class="flex-1 flex flex-col h-full bg-white dark:bg-transparent min-w-0 transition-all">
-      <div class="chat-header px-8 py-3 border-b border-slate-200 dark:border-border flex justify-between items-center transition-colors">
+      <div class="chat-header px-9 py-3 border-b border-slate-200 dark:border-border flex justify-between items-center transition-colors">
         <div class="flex items-center gap-2">
-          <span class="text-neo-green text-lg font-bold" style="color: ${networkColor}">◆</span>
+          <span class="text-neo-green-readable text-lg font-bold" style="color: ${networkColor}">◆</span>
           <span class="font-bold text-slate-800 dark:text-text-primary truncate max-w-[300px]" id="active-session-name">Chat</span>
         </div>
         <div class="flex gap-2">
@@ -42,28 +47,28 @@ export async function renderChat() {
       </div>
 
       <div class="flex-1 flex flex-col border-[3px] bg-white dark:bg-bg-secondary shadow-md overflow-hidden min-w-0 transition-all" style="border-color: ${networkColor}">
-        <div class="chat-messages flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-4" id="chat-messages">
+        <div class="chat-messages flex-1 overflow-y-auto px-[17px] py-6 flex flex-col gap-4" id="chat-messages">
           <div class="flex-1 flex items-center justify-center opacity-50"><div class="animate-pulse">Loading conversation...</div></div>
         </div>
       </div>
 
-      <div class="px-4 pt-5 pb-6 border-t border-slate-200 dark:border-border bg-white dark:bg-bg-secondary w-full overflow-visible">
+      <div class="px-4 pt-5 pb-6 border-t border-slate-300 dark:border-border bg-white dark:bg-bg-secondary w-full overflow-visible">
         <div class="w-full group overflow-visible">
-          <div class="flex flex-col bg-slate-50 dark:bg-bg-input border border-slate-200 dark:border-border-light rounded-2xl focus-within:border-neo-green/60 focus-within:shadow-[0_0_0_1px_rgba(0,229,153,0.3),0_0_209x_rgba(0,229,153,0.15)] focus-within:z-10 transition-all shadow-sm hover:shadow-md relative overflow-visible">
+          <div class="flex flex-col bg-transparent dark:bg-bg-input border border-slate-300 dark:border-border-light rounded-2xl focus-within:border-neo-green/60 focus-within:shadow-[0_0_0_1px_rgba(0,229,153,0.3),0_0_20px_rgba(0,229,153,0.15)] focus-within:z-10 transition-all shadow-sm hover:shadow-md relative overflow-visible">
             <!-- Text Input -->
             ${TextArea({
               id: 'chat-input',
               placeholder: 'Ask Morpheus anything...',
-              className: 'min-h-[60px] max-h-[160px] border-none bg-transparent focus:ring-0 px-5 py-4 text-[15px] leading-relaxed'
+              className: 'min-h-[60px] max-h-[160px] border-none bg-transparent focus:ring-0 focus:border-none rounded-t-2xl px-5 py-4 text-[15px] leading-relaxed text-slate-800 dark:text-text-primary shadow-none'
             })}
             
             <!-- Bottom Tool Bar -->
-            <div class="flex items-center justify-between px-3 py-2 border-t border-slate-200/50 dark:border-border/30 bg-white/50 dark:bg-white/5">
+            <div class="flex items-center justify-between px-3 py-2 border-t border-slate-200 dark:border-border/30 bg-slate-50/50 dark:bg-white/5 rounded-b-2xl">
               <div class="flex items-center gap-1">
                 ${WalletSelector()}
-                <div class="w-px h-4 bg-slate-200 dark:bg-border/50 mx-1"></div>
+                <div class="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1"></div>
                 ${NetworkSelector()}
-                <div class="w-px h-4 bg-slate-200 dark:bg-border/50 mx-1"></div>
+                <div class="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1"></div>
                 ${ModelSelector()}
               </div>
               
@@ -160,8 +165,7 @@ export async function switchSession(id) {
     isAgentRunning: !!session?.isRunning
   });
   localStorage.setItem('activeSessionId', id);
-  await loadActiveSession();
-  updateStopBtn();
+  await renderChat();
 }
 
 async function loadActiveSession() {
@@ -368,7 +372,7 @@ export function updateToolResult(container, event) {
   if (statusEl) {
     statusEl.textContent = event.success !== false ? 'Completed' : 'Failed';
     statusEl.classList.remove('text-slate-500', 'dark:text-text-muted');
-    statusEl.classList.add(event.success !== false ? 'text-neo-green' : 'text-red-500');
+    statusEl.classList.add(event.success !== false ? 'text-neo-green-readable' : 'text-red-500');
   }
 
   const body = card.querySelector('.activity-body');
@@ -376,7 +380,7 @@ export function updateToolResult(container, event) {
   if (body) {
     const resultText = event.result || event.error || '(No result)';
     const statusLabel = event.success !== false ? '✓ Success' : '✗ Error';
-    const statusClass = event.success !== false ? 'text-neo-green' : 'text-red-500';
+    const statusClass = event.success !== false ? 'text-neo-green-readable' : 'text-red-500';
     
     body.innerHTML += `<div class="mt-3 pt-3 border-t border-slate-200/50 dark:border-border/30">
       <div class="font-bold ${statusClass} mb-1 text-[11px] uppercase tracking-wider">${statusLabel}</div>

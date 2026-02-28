@@ -38,7 +38,7 @@ export function parseMarkdown(text) {
   html = html.replace(/^(#{1,6})\s+(.*)$/gm, (match, hashes, content) => {
     const level = hashes.length;
     const styles = {
-      1: 'text-lg font-bold text-neo-green mb-2 mt-1',
+      1: 'text-lg font-bold text-neo-green-readable mb-2 mt-1',
       2: 'text-[15px] font-bold text-slate-800 dark:text-text-primary mb-1.5 mt-1',
       3: 'text-[14px] font-bold text-slate-700 dark:text-text-secondary mb-1 mt-0.5',
       4: 'text-[13px] font-bold text-slate-600 dark:text-text-secondary mb-1'
@@ -72,7 +72,7 @@ export function parseMarkdown(text) {
     }
 
     const thCells = headerRow.map(h => 
-      `<th class="px-3.5 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-neo-green whitespace-nowrap">${h}</th>`
+      `<th class="px-3.5 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-neo-green-readable whitespace-nowrap">${h}</th>`
     ).join('');
     
     const bodyRows = dataRows.map((cells, i) => {
@@ -98,7 +98,7 @@ export function parseMarkdown(text) {
   // 7. Bullet Lists: - item
   html = html.replace(/(?:\n|^)\s*-\s+(.*?)(?=(?:\n\s*-\s+)|$|\n\n)/g, (match, content) => {
     return `<div class="flex gap-2.5 mt-1.5 mb-1 ml-1.5">
-      <span class="text-neo-green font-bold text-[10px] mt-1 shrink-0">◆</span>
+      <span class="text-neo-green-readable font-bold text-[10px] mt-1 shrink-0">◆</span>
       <span class="flex-1">${content}</span>
     </div>`;
   });
@@ -106,13 +106,17 @@ export function parseMarkdown(text) {
   // 8. Ordered Lists: 1. item
   html = html.replace(/(?:\n|^)\s*(\d+)\.\s+(.*?)(?=(?:\n\s*\d+\.\s+)|$|\n\n)/g, (match, num, content) => {
     return `<div class="flex gap-2.5 mt-1.5 mb-1 ml-1.5">
-      <span class="text-neo-green font-bold text-[11px] mt-0.5 shrink-0">${num}.</span>
+      <span class="text-neo-green-readable font-bold text-[11px] mt-0.5 shrink-0">${num}.</span>
       <span class="flex-1">${content}</span>
     </div>`;
   });
 
   // 9. Horizontal Rules: ---
   html = html.replace(/\n---\n/g, '<div class="h-px bg-slate-200 dark:bg-border my-4"></div>');
+
+  // 9b. Auto-link URLs
+  const urlRegex = /(https?:\/\/[^\s<]+[^<.,\s])/g;
+  html = html.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-neo-green-readable hover:underline break-all">$1</a>');
 
   // 10. Paragraphs and Line Breaks
   // Replace double newlines with a structured gap

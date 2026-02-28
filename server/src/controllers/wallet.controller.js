@@ -64,8 +64,3 @@ export const importJson = (req, res) => {
   }
 };
 
-export const updateSelection = (req, res) => {
-  const { walletIds } = req.body;
-  const selected = walletService.updateSelection(walletIds || []);
-  res.json(selected);
-};

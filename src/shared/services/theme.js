@@ -28,17 +28,32 @@ export function setTheme(theme) {
 
 export function updateThemeToggleUI(theme) {
   const container = document.getElementById('theme-toggle');
-  if (!container) return;
+  const indicator = document.getElementById('theme-toggle-indicator');
+  if (!container || !indicator) return;
   
-  const buttons = container.querySelectorAll('.toggle-option');
+  const isDark = theme === 'dark';
+  indicator.style.transform = isDark ? 'translateX(100%)' : 'translateX(0)';
+  
+  const buttons = container.querySelectorAll('.theme-opt');
   buttons.forEach(btn => {
     const active = btn.dataset.theme === theme;
+    
+    // Clear previous dynamic classes
+    btn.classList.remove('text-slate-900', 'text-slate-500', 'text-black', 'text-text-secondary', 'font-bold');
+    
     if (active) {
-      btn.classList.add('bg-white', 'dark:bg-neo-green', 'shadow-sm', 'text-slate-900', 'dark:text-black', 'font-semibold');
-      btn.classList.remove('text-slate-500', 'dark:text-text-secondary');
+      btn.classList.add('font-bold');
+      if (isDark) {
+        btn.classList.add('text-black'); // Black text on green background
+      } else {
+        btn.classList.add('text-slate-900'); // Dark slate on white background
+      }
     } else {
-      btn.classList.remove('bg-white', 'dark:bg-neo-green', 'shadow-sm', 'text-slate-900', 'dark:text-black', 'font-semibold');
-      btn.classList.add('text-slate-500', 'dark:text-text-secondary');
+      if (isDark) {
+        btn.classList.add('text-text-secondary');
+      } else {
+        btn.classList.add('text-slate-500');
+      }
     }
   });
 }

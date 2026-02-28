@@ -10,6 +10,8 @@ import { renderWallets } from './features/wallets/wallets.js';
 import { renderHistory } from './features/history/history.js';
 import { renderSettings } from './features/settings/settings.js';
 import { formatTimeAgo } from './shared/utils/helpers.js';
+import { ThemeToggle, initThemeToggle } from './shared/components/theme-toggle.js';
+import { walletsApi } from './features/wallets/wallets-api.js';
 
 // Global Session List Renderer
 export async function renderGlobalSessionList(force = false) {
@@ -32,14 +34,22 @@ export async function renderGlobalSessionList(force = false) {
       const active = s.id === state.activeSessionId;
       const timeHint = formatTimeAgo(s.updatedAt);
       
+      let dotColor = s.settings?.network === 'mainnet' 
+        ? (s.settings.mainnetColor || '#ef4444') 
+        : (s.settings.testnetColor || '#008055');
+
+      if (dotColor === '#00e599' && !document.documentElement.classList.contains('dark')) {
+        dotColor = '#008055';
+      }
+
       return `
         <div class="px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all cursor-pointer truncate flex items-center justify-between group ${
           active 
-            ? 'bg-neo-green/10 text-neo-green border border-neo-green/20 shadow-sm' 
+            ? 'bg-neo-green-readable/10 text-neo-green-readable border border-neo-green-readable/20 shadow-sm' 
             : 'text-slate-500 dark:text-text-secondary hover:bg-slate-200/50 dark:hover:bg-bg-card/50'
         }" data-id="${s.id}">
           <div class="flex items-center gap-2 flex-1 truncate">
-            <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background-color: ${s.settings?.network === 'mainnet' ? (s.settings?.mainnetColor || '#ef4444') : (s.settings?.testnetColor || '#00e599')}"></span>
+            <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background-color: ${dotColor}"></span>
             <span class="truncate">${s.name}</span>
           </div>
           ${timeHint ? `<span class="text-[10px] opacity-60 font-normal ml-2 shrink-0">${timeHint}</span>` : ''}
@@ -125,8 +135,7 @@ function initSidebar() {
   const toggle = document.getElementById('sidebar-toggle');
   const close = document.getElementById('sidebar-close');
   const overlay = document.getElementById('sidebar-overlay');
-  const themeCycle = document.getElementById('theme-cycle');
-
+  
   if (!sidebar) return;
 
   const toggleSidebar = () => {
@@ -144,15 +153,11 @@ function initSidebar() {
   close?.addEventListener('click', toggleSidebar);
   overlay?.addEventListener('click', toggleSidebar);
 
-  themeCycle?.addEventListener('click', () => {
-    const themes = ['light', 'dark'];
-    const currentIdx = themes.indexOf(state.settings.theme || 'dark');
-    const next = themes[(currentIdx + 1) % themes.length];
-    setTheme(next);
-    
-    // Minimal background sync
-    api.updateSettings({ ...state.settings, theme: next }, state.activeSessionId).catch(() => {});
-  });
+  const footer = document.getElementById('sidebar-footer');
+  if (footer) {
+    footer.innerHTML = ThemeToggle();
+    initThemeToggle(footer);
+  }
 
   document.getElementById('global-new-chat-btn')?.addEventListener('click', handleGlobalNewChat);
 
@@ -166,11 +171,19 @@ function initSidebar() {
 
 // ─── Boot ───────────────────────────────────────
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initSidebar();
   initTheme();
   connectWs();
+  
+  // Pre-fetch critical data
   renderGlobalSessionList();
+  try {
+    const wallets = await walletsApi.getWallets();
+    updateState({ wallets });
+  } catch (err) {
+    console.error('Failed to pre-fetch wallets:', err);
+  }
   
   window.addEventListener('hashchange', onHashChange);
   onHashChange();

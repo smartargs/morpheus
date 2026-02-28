@@ -18,7 +18,7 @@ export function ToolItem({ tool }) {
   return `
     <div class="bg-white dark:bg-bg-card border border-slate-200 dark:border-border rounded-xl overflow-hidden transition-all hover:border-slate-300 dark:hover:border-border-light tool-item">
       <div class="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-bg-card-hover transition-colors tool-header">
-        <div class="font-mono text-[13px] font-bold text-neo-green">${esc(tool.name)}</div>
+        <div class="font-mono text-[13px] font-bold text-neo-green-readable">${esc(tool.name)}</div>
         <span class="text-slate-400 dark:text-text-muted text-[11px] transition-transform activity-chevron">▼</span>
       </div>
       <div class="hidden px-4 pb-4 animate-fade-slide tool-body">

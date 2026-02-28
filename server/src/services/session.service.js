@@ -2,6 +2,18 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../database/sqlite.js';
 
 const sessions = new Map();
+const globalSettings = {
+  network: 'testnet',
+  model: 'claude-sonnet-4-6',
+  testnetColor: '#008055',
+  mainnetColor: '#ef4444',
+  theme: 'dark'
+};
+
+function persistGlobalSettings() {
+  db.prepare('DELETE FROM global_settings').run();
+  db.prepare('INSERT INTO global_settings (value) VALUES (?)').run(JSON.stringify(globalSettings));
+}
 
 // Helper to save a session to DB
 function persistSession(session) {
@@ -29,11 +41,26 @@ export function loadSessions() {
       ...row,
       conversationHistory: JSON.parse(row.conversationHistory),
       events: JSON.parse(row.events),
-      settings: JSON.parse(row.settings),
-      abortController: null,
-      pendingApproval: null
-    });
-  }
+    settings: {
+      mode: 'supervised',
+      systemInstructions: '',
+      selectedWalletIds: [],
+    },
+    abortController: null,
+    pendingApproval: null,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt
+  });
+}
+
+// Load global settings
+const globalSettingsStmt = db.prepare('SELECT * FROM global_settings LIMIT 1');
+const globalSettingsRow = globalSettingsStmt.get();
+if (globalSettingsRow) {
+  Object.assign(globalSettings, JSON.parse(globalSettingsRow.value));
+} else {
+  // Initialize default global settings
+  persistGlobalSettings();
 }
 
 function generateShortId(length = 4) {
@@ -67,10 +94,7 @@ export function createSession(name) {
     settings: {
       mode: 'supervised',
       systemInstructions: '',
-      network: 'testnet',
-      model: 'claude-sonnet-4-6',
-      testnetColor: '#00e599',
-      mainnetColor: '#ef4444',
+      selectedWalletIds: [],
     },
     abortController: null,
     pendingApproval: null,
@@ -149,13 +173,29 @@ export function getAllHistory() {
 export function updateSettings(sessionId, newSettings) {
   const session = sessions.get(sessionId);
   if (!session) return;
+  
+  // Extract global settings
+  const globalKeys = ['network', 'model', 'testnetColor', 'mainnetColor', 'theme'];
+  let globalChanged = false;
+  globalKeys.forEach(key => {
+    if (key in newSettings) {
+      globalSettings[key] = newSettings[key];
+      delete newSettings[key];
+      globalChanged = true;
+    }
+  });
+
+  if (globalChanged) persistGlobalSettings();
+
+  // Apply other session-specific settings
   Object.assign(session.settings, newSettings);
   session.updatedAt = Date.now();
   persistSession(session);
-  return session.settings;
+  return { ...session.settings, ...globalSettings };
 }
 
 export function getSettings(sessionId) {
   const session = sessions.get(sessionId);
-  return session ? session.settings : null;
+  if (!session) return globalSettings;
+  return { ...session.settings, ...globalSettings };
 }

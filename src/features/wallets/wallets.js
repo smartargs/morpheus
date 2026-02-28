@@ -11,7 +11,7 @@ export async function renderWallets() {
     <div class="p-8 pb-12 max-w-[1000px] w-full mx-auto">
       <div class="mb-8">
         <h1 class="text-2xl font-bold tracking-tight mb-1">Wallets</h1>
-        <p class="text-[14px] text-slate-500 dark:text-text-secondary">Manage wallets and select which ones the agent can use.</p>
+        <p class="text-[14px] text-slate-500 dark:text-text-secondary">Manage wallets and view asset balances across networks.</p>
       </div>
       <div class="flex gap-2.5 mb-6">
         ${Button({ id: 'create-wallet-btn', label: 'Create Wallet', icon: '+ ' })}
@@ -76,8 +76,8 @@ function toggleImportForm() {
       <div id="import-json-panel" class="hidden">
         <div class="relative">
           <label for="import-json-file" class="flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed border-slate-300 dark:border-border-light rounded-xl cursor-pointer hover:border-neo-green hover:bg-neo-green/5 transition-all group">
-            <svg class="w-8 h-8 text-slate-400 dark:text-text-muted group-hover:text-neo-green transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <span class="text-[13px] font-medium text-slate-500 dark:text-text-secondary group-hover:text-neo-green transition-colors">Click to upload a <code class="text-[11px] bg-slate-200 dark:bg-bg-input px-1.5 py-0.5 rounded">.json</code> wallet file</span>
+            <svg class="w-8 h-8 text-slate-400 dark:text-text-muted group-hover:text-neo-green-readable transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span class="text-[13px] font-medium text-slate-500 dark:text-text-secondary group-hover:text-neo-green-readable transition-colors">Click to upload a <code class="text-[11px] bg-slate-200 dark:bg-bg-input px-1.5 py-0.5 rounded">.json</code> wallet file</span>
             <span class="text-[11px] text-slate-400 dark:text-text-muted">Supports NEP-6 wallets, arrays, or single wallet objects</span>
           </label>
           <input type="file" id="import-json-file" accept=".json,application/json" class="sr-only" />
@@ -130,7 +130,7 @@ function toggleImportForm() {
       const result = await walletsApi.importJsonWallet(json);
       
       if (status) {
-        status.innerHTML = `<div class="flex items-center gap-2 text-[13px] text-neo-green font-medium"><span>✓</span> Imported ${result.imported} wallet${result.imported !== 1 ? 's' : ''} from ${file.name}</div>`;
+        status.innerHTML = `<div class="flex items-center gap-2 text-[13px] text-neo-green-readable font-medium"><span>✓</span> Imported ${result.imported} wallet${result.imported !== 1 ? 's' : ''} from ${file.name}</div>`;
       }
       
       setTimeout(async () => {
@@ -170,21 +170,56 @@ async function loadWallets(force = false) {
       .map((w) => WalletCard({ wallet: w }))
       .join('');
 
-    grid.querySelectorAll('.agent-select').forEach((cb) => {
-      cb.addEventListener('change', async () => {
-        const id = cb.dataset.walletId;
-        
-        // Optimistic state update
-        const updatedWallets = state.wallets.map(w => {
-           if (w.id === id) return { ...w, selected: cb.checked };
-           return w;
-        });
-        updateState({ wallets: updatedWallets });
+    // Edit Label Logic
+    grid.querySelectorAll('.wallet-card').forEach((card) => {
+      const id = card.dataset.id;
+      const editBtn = card.querySelector('.edit-label-btn');
+      const labelText = card.querySelector('.wallet-label-text');
+      const labelInput = card.querySelector('.wallet-label-input');
 
-        // Sync in background without re-fetching
-        const selectedIds = updatedWallets.filter(w => w.selected).map(w => w.id);
-        walletsApi.updateWalletSelection(selectedIds).catch(err => console.error('Failed to sync selection:', err));
+      const startEditing = () => {
+        labelText.classList.add('hidden');
+        labelInput.classList.remove('hidden');
+        labelInput.focus();
+        labelInput.select();
+      };
+
+      const stopEditing = async (save = true) => {
+        if (labelInput.classList.contains('hidden')) return;
+        
+        const newValue = labelInput.value.trim();
+        const oldValue = labelText.textContent;
+        
+        labelInput.classList.add('hidden');
+        labelText.classList.remove('hidden');
+
+        if (save && newValue && newValue !== oldValue) {
+          labelText.textContent = newValue; // Optimistic
+          try {
+            await walletsApi.updateWallet(id, { label: newValue });
+            // Update global state
+            const updatedWallets = state.wallets.map(w => w.id === id ? { ...w, label: newValue } : w);
+            updateState({ wallets: updatedWallets });
+          } catch (err) {
+            labelText.textContent = oldValue;
+            alert(err.message);
+          }
+        } else {
+          labelInput.value = oldValue;
+        }
+      };
+
+      editBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        startEditing();
       });
+
+      labelInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') stopEditing(true);
+        if (e.key === 'Escape') stopEditing(false);
+      });
+
+      labelInput?.addEventListener('blur', () => stopEditing(true));
     });
   } catch {
     grid.innerHTML = '<p style="color:var(--text-muted);padding:20px">Could not load wallets.</p>';

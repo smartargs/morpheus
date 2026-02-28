@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { callTool } from './mcp.service.js';
 import { addMessage, addEvent } from './session.service.js';
-import { getSelectedWallets } from './wallet.service.js';
+import { getWalletsByIds } from './wallet.service.js';
 import { CRITICAL_TOOLS } from '../config/constants.js';
 import { LOCAL_TOOL_DEFINITIONS } from '../tools/definitions.js';
 import { executeLocalTool } from '../tools/handlers.js';
@@ -16,13 +16,14 @@ function getClient() {
 }
 
 function buildSystemPrompt(session) {
-  const agentWallets = getSelectedWallets();
+  const selectedIds = session.settings.selectedWalletIds || [];
+  const agentWallets = getWalletsByIds(selectedIds);
   const walletInfo =
     agentWallets.length > 0
       ? agentWallets
           .map((w) => `- ${w.label}: ${w.address}`)
           .join('\n')
-      : 'No wallets selected. Ask the user to select a wallet on the Wallets page.';
+      : 'No wallets selected for this chat. Ask the user to select wallets via the wallet icon in the chat interface.';
 
   const customInstructions = session.settings.systemInstructions
     ? `\n\nUser Instructions:\n${session.settings.systemInstructions}`
