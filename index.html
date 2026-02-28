@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neo N3 Assistant</title>
+    <meta
+      name="description"
+      content="AI-powered assistant for Neo N3 blockchain interactions"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+    <script>
+      // Initialize theme before rendering
+      (function () {
+        const theme = localStorage.getItem("theme") || "dark";
+        if (theme === "dark") {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      })();
+    </script>
+  </head>
+  <body
+    class="h-full bg-white dark:bg-bg-primary text-slate-900 dark:text-text-primary"
+  >
+    <!-- Mobile Header -->
+    <header
+      class="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-bg-sidebar border-b border-slate-200 dark:border-border z-50 flex items-center justify-between px-4"
+    >
+      <div class="flex items-center gap-2">
+        <span class="text-neo-green font-bold text-lg">◆</span>
+        <span class="font-bold tracking-tight">Assistant</span>
+      </div>
+
+      <!-- Mobile Menu Toggle -->
+      <button
+        id="sidebar-toggle"
+        class="w-10 h-10 flex items-center justify-center text-slate-500 dark:text-text-secondary hover:text-neo-green transition-all"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          ></path>
+        </svg>
+      </button>
+    </header>
+
+    <div class="flex h-full relative pt-14 lg:pt-0">
+      <!-- Sidebar Overlay (mobile) -->
+      <div
+        id="sidebar-overlay"
+        class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-[60] lg:hidden hidden"
+      ></div>
+
+      <!-- Sidebar -->
+      <nav
+        class="lg:w-64 w-64 lg:static fixed inset-y-0 left-0 z-[70] bg-slate-50 dark:bg-bg-sidebar border-r border-slate-200 dark:border-border flex flex-col py-5 transition-transform duration-300 -translate-x-full lg:translate-x-0"
+        id="sidebar"
+      >
+        <div
+          class="flex items-center justify-between px-5 pb-6 border-b border-slate-200 dark:border-border mb-3"
+        >
+          <div class="flex items-center gap-2.5">
+            <div
+              class="text-2xl text-neo-green drop-shadow-[0_0_6px_rgba(0,229,153,0.3)]"
+            >
+              ◆
+            </div>
+            <span
+              class="text-xl font-bold tracking-tight bg-gradient-to-br from-neo-green to-[#66ffcc] bg-clip-text text-transparent"
+              >Neo N3</span
+            >
+          </div>
+          <button id="sidebar-close" class="lg:hidden text-slate-400">
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+        </div>
+        <div class="px-3 mb-4">
+          <button
+            id="global-new-chat-btn"
+            class="w-full flex items-center justify-center gap-2 py-3 bg-neo-green text-black font-bold rounded-xl shadow-lg shadow-neo-green/10 hover:shadow-neo-green/20 transition-all active:scale-[0.98] group"
+          >
+            <svg
+              class="w-5 h-5 transition-transform group-hover:rotate-90"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <span>New Chat</span>
+          </button>
+        </div>
+        <ul class="flex-1 px-3 space-y-0.5">
+          <li>
+            <a href="#chat" class="nav-link" data-page="chat">
+              <svg
+                class="w-5 h-5 flex-shrink-0"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                ></path>
+              </svg>
+              <span>Chat</span>
+            </a>
+          </li>
+          <li>
+            <a href="#wallets" class="nav-link" data-page="wallets">
+              <svg
+                class="w-5 h-5 flex-shrink-0"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="M2 10h20" />
+                <path d="M16 14h2" />
+              </svg>
+              <span>Wallets</span>
+            </a>
+          </li>
+          <li>
+            <a href="#history" class="nav-link" data-page="history">
+              <svg
+                class="w-5 h-5 flex-shrink-0"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span>History</span>
+            </a>
+          </li>
+          <li>
+            <a href="#settings" class="nav-link" data-page="settings">
+              <svg
+                class="w-5 h-5 flex-shrink-0"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                />
+              </svg>
+              <span>Settings</span>
+            </a>
+          </li>
+        </ul>
+
+        <!-- Global Chat List -->
+        <div
+          class="px-3 py-2 mt-4 border-t border-slate-200 dark:border-border flex-1 flex flex-col min-h-0 overflow-hidden group"
+        >
+          <div class="flex items-center justify-between mb-3 px-2">
+            <h3
+              class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-text-muted"
+            >
+              Recent Chats
+            </h3>
+          </div>
+          <div
+            id="global-session-list"
+            class="flex-1 overflow-y-auto space-y-1 min-h-0 pr-1"
+          >
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+        <div
+          class="px-5 py-4 border-t border-slate-200 dark:border-border space-y-3"
+        >
+          <div class="flex items-center justify-between">
+            <button
+              id="theme-cycle"
+              class="p-2 bg-slate-100 dark:bg-bg-card rounded-md text-slate-500 dark:text-text-secondary hover:text-neo-green transition-colors"
+              title="Toggle Theme"
+            >
+              <svg
+                id="theme-icon-light"
+                class="w-5 h-5 hidden"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                ></path>
+              </svg>
+              <svg
+                id="theme-icon-dark"
+                class="w-5 h-5 hidden"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                ></path>
+              </svg>
+            </button>
+            <div
+              class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-text-muted bg-slate-100/50 dark:bg-bg-card/50 px-2.5 py-1.5 rounded-full"
+              id="network-badge"
+            >
+              <span
+                class="w-1.5 h-1.5 rounded-full bg-neo-green network-dot"
+              ></span>
+              <span id="network-label">Testnet</span>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main
+        class="flex-1 overflow-y-auto overflow-x-hidden flex flex-col bg-white dark:bg-bg-primary"
+        id="app"
+      ></main>
+    </div>
+
+    <!-- Approval Modal -->
+    <div
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-[modalFadeIn_0.2s_ease]"
+      id="approval-modal"
+      style="display: none"
+    >
+      <div
+        class="bg-white dark:bg-bg-card border border-slate-200 dark:border-border-light rounded-2xl p-6 w-[90%] max-w-lg shadow-2xl"
+      >
+        <div class="mb-4">
+          <h3 class="text-lg font-bold">⚠️ Approval Required</h3>
+        </div>
+        <div
+          class="text-sm text-slate-600 dark:text-text-secondary leading-relaxed mb-5 font-mono bg-slate-100 dark:bg-bg-primary p-3 rounded-md max-h-[200px] overflow-y-auto whitespace-pre-wrap break-all"
+          id="approval-body"
+        ></div>
+        <div class="flex gap-2.5 justify-end">
+          <button class="btn-danger text-sm font-semibold" id="approval-reject">
+            Reject
+          </button>
+          <button class="btn-primary text-sm" id="approval-approve">
+            Approve
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
