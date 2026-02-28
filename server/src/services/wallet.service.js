@@ -1,10 +1,31 @@
-import { wallet, CONST, rpc, sc, tx, u } from '@cityofzion/neon-js';
 import { v4 as uuidv4 } from 'uuid';
 import { callTool } from './mcp.service.js';
-import { NETWORK_CONFIG } from '../config/networks.js';
+import db from '../database/sqlite.js';
+import * as neonService from './neonjs.service.js';
 
 const wallets = new Map();
 const selectedWalletIds = new Set();
+
+// Persistence Helpers
+function persistWallet(w) {
+  const stmt = db.prepare(`
+    INSERT OR REPLACE INTO wallets (id, label, address, publicKey, wif, createdAt)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  stmt.run(w.id, w.label, w.address, w.publicKey, w.wif, w.createdAt);
+}
+
+export function loadWallets() {
+  const stmt = db.prepare('SELECT * FROM wallets ORDER BY createdAt DESC');
+  const rows = stmt.all();
+  for (const row of rows) {
+    wallets.set(row.id, { ...row });
+  }
+}
+
+/**
+ * High-level Wallet Management
+ */
 
 export function listWallets() {
   return Array.from(wallets.values()).map((w) => ({
@@ -18,16 +39,17 @@ export function getSelectedWallets() {
 }
 
 export async function createWallet(label = 'New Wallet') {
-  const account = new wallet.Account();
+  const account = neonService.createNewAccount();
   const newWallet = {
     id: uuidv4(),
     label,
     address: account.address,
     publicKey: account.publicKey,
-    wif: account.WIF,
+    wif: account.wif,
     createdAt: Date.now(),
   };
   wallets.set(newWallet.id, newWallet);
+  persistWallet(newWallet);
   return newWallet;
 }
 
@@ -37,11 +59,11 @@ export function importWallet(label, address, wif = '') {
 
   if (wif) {
     try {
-      const account = new wallet.Account(wif);
-      finalAddress = account.address;
-      publicKey = account.publicKey;
+      const parsed = neonService.parseWif(wif);
+      finalAddress = parsed.address;
+      publicKey = parsed.publicKey;
     } catch (err) {
-      console.warn('[WalletService] WIF provided but could not be parsed:', err.message);
+      console.warn('[WalletService] WIF parsing failed:', err.message);
     }
   }
 
@@ -54,7 +76,17 @@ export function importWallet(label, address, wif = '') {
     createdAt: Date.now(),
   };
   wallets.set(newWallet.id, newWallet);
+  persistWallet(newWallet);
   return newWallet;
+}
+
+export function removeWallet(id) {
+  const deleted = wallets.delete(id);
+  if (deleted) {
+    db.prepare('DELETE FROM wallets WHERE id = ?').run(id);
+    selectedWalletIds.delete(id);
+  }
+  return deleted;
 }
 
 export function updateSelection(walletIds = []) {
@@ -64,6 +96,10 @@ export function updateSelection(walletIds = []) {
   }
   return getSelectedWallets();
 }
+
+/**
+ * Data Aggregation & Logic
+ */
 
 export async function getBalance(address) {
   try {
@@ -94,53 +130,15 @@ export function getWifByAddress(address) {
   return w ? w.wif : null;
 }
 
+/**
+ * Blockchain Actions
+ */
+
 export async function performTransfer(fromAddress, toAddress, amount, asset, network = 'testnet') {
-  const config = NETWORK_CONFIG[network] || NETWORK_CONFIG.testnet;
   const wif = getWifByAddress(fromAddress);
+  if (!wif) {
+    throw new Error(`No private key (WIF) found for address ${fromAddress}. Please import it first.`);
+  }
   
-  if (!wif) throw new Error(`No private key (WIF) found for address ${fromAddress}. Please import it first.`);
-  
-  const fromAccount = new wallet.Account(wif);
-  const rpcClient = new rpc.RPCClient(config.rpcUrl);
-  
-  let assetHash = asset;
-  if (asset.toUpperCase() === 'NEO') assetHash = CONST.NATIVE_CONTRACT_HASH.NeoToken;
-  if (asset.toUpperCase() === 'GAS') assetHash = CONST.NATIVE_CONTRACT_HASH.GasToken;
-  
-  const script = sc.createScript({
-    scriptHash: assetHash,
-    operation: 'transfer',
-    args: [
-      sc.ContractParam.hash160(fromAddress),
-      sc.ContractParam.hash160(toAddress),
-      amount,
-      sc.ContractParam.any(),
-    ],
-  });
-
-  const currentHeight = await rpcClient.getBlockCount();
-  const transaction = new tx.Transaction({
-    signers: [{
-      account: fromAccount.scriptHash,
-      scopes: tx.WitnessScope.CalledByEntry,
-    }],
-    validUntilBlock: currentHeight + 1000,
-    script: script,
-  });
-
-  const invokeResponse = await rpcClient.invokeScript(u.HexString.fromHex(transaction.script), [{
-    account: fromAccount.scriptHash,
-    scopes: tx.WitnessScope.CalledByEntry,
-  }]);
-  if (invokeResponse.state !== 'HALT') throw new Error(`Transfer simulation failed: ${invokeResponse.exception}`);
-  transaction.systemFee = u.BigInteger.fromNumber(invokeResponse.gasconsumed);
-
-  const feePerByteResponse = await rpcClient.invokeFunction(CONST.NATIVE_CONTRACT_HASH.PolicyContract, 'getFeePerByte');
-  const feePerByte = u.BigInteger.fromNumber(feePerByteResponse.stack[0].value);
-  const transactionByteSize = transaction.serialize().length / 2 + 109;
-  const witnessProcessingFee = u.BigInteger.fromNumber(1000390);
-  transaction.networkFee = feePerByte.mul(transactionByteSize).add(witnessProcessingFee);
-
-  const signedTransaction = transaction.sign(fromAccount, config.magic);
-  return await rpcClient.sendRawTransaction(u.HexString.fromHex(signedTransaction.serialize(true)));
+  return await neonService.transferTokens(wif, toAddress, amount, asset, network);
 }

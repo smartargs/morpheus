@@ -38,8 +38,11 @@ export async function renderGlobalSessionList(force = false) {
             ? 'bg-neo-green/10 text-neo-green border border-neo-green/20 shadow-sm' 
             : 'text-slate-500 dark:text-text-secondary hover:bg-slate-200/50 dark:hover:bg-bg-card/50'
         }" data-id="${s.id}">
-          <span class="truncate flex-1">${s.name}</span>
-          ${timeHint ? `<span class="text-[10px] opacity-60 font-normal ml-2">${timeHint}</span>` : ''}
+          <div class="flex items-center gap-2 flex-1 truncate">
+            <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background-color: ${s.settings?.network === 'mainnet' ? (s.settings?.mainnetColor || '#ef4444') : (s.settings?.testnetColor || '#00e599')}"></span>
+            <span class="truncate">${s.name}</span>
+          </div>
+          ${timeHint ? `<span class="text-[10px] opacity-60 font-normal ml-2 shrink-0">${timeHint}</span>` : ''}
         </div>
       `;
     }).join('');

@@ -69,6 +69,8 @@ export function createSession(name) {
       systemInstructions: '',
       network: 'testnet',
       model: 'claude-sonnet-4-6',
+      testnetColor: '#00e599',
+      mainnetColor: '#ef4444',
     },
     abortController: null,
     pendingApproval: null,

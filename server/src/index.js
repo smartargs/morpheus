@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import { createApp } from './app.js';
 import { initMcpClient, closeMcpClient } from './services/mcp.service.js';
 import { loadSessions } from './services/session.service.js';
+import { loadWallets } from './services/wallet.service.js';
 
 const PORT = process.env.PORT || 3001;
 const NETWORK = process.env.NEO_NETWORK || 'testnet';
@@ -14,8 +15,9 @@ async function bootstrap() {
   // Attach Express app to HTTP server
   httpServer.on('request', app);
 
-  // Initialize DB sessions
+  // Initialize DB
   loadSessions();
+  loadWallets();
 
   httpServer.listen(PORT, () => {
     console.log(`[Server] Running at http://localhost:${PORT}`);

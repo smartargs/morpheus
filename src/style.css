@@ -36,6 +36,13 @@
   body {
     @apply bg-white dark:bg-bg-primary text-slate-900 dark:text-text-primary font-sans antialiased overflow-hidden h-full;
   }
+  
+  button, 
+  a, 
+  [role="button"],
+  .cursor-pointer {
+    cursor: pointer;
+  }
 }
 
 @layer components {
@@ -110,4 +117,17 @@
 .no-transitions * {
   transition: none !important;
   animation: none !important;
+}
+
+/* Ensure code and long strings wrap correctly in chat bubbles */
+code {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }

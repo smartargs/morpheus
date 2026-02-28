@@ -8,19 +8,26 @@ import { EmptyState } from '../../shared/components/empty-state.js';
 import { ActivityCard, initActivityCard } from './components/activity-card.js';
 import { WalletSelector, initWalletSelector } from './components/wallet-selector.js';
 import { ModelSelector, initModelSelector } from './components/model-selector.js';
+import { NetworkSelector, initNetworkSelector } from './components/network-selector.js';
 import { parseMarkdown, esc } from '../../shared/utils/helpers.js';
 
 export async function renderChat() {
   const app = document.getElementById('app');
-  
+  if (!app) return;
+
   // Ensure we have sessions and an active one
   await initSessions();
 
+  const activeSession = state.sessions.find(s => s.id === state.activeSessionId);
+  const networkColor = activeSession?.settings?.network === 'mainnet' 
+    ? (activeSession.settings.mainnetColor || '#ff9800')
+    : (activeSession.settings.testnetColor || '#00e599');
+
   app.innerHTML = `
-    <div class="flex-1 flex flex-col h-full bg-white dark:bg-transparent min-w-0">
+    <div class="flex-1 flex flex-col h-full bg-white dark:bg-transparent min-w-0 transition-all">
       <div class="chat-header px-8 py-3 border-b border-slate-200 dark:border-border flex justify-between items-center transition-colors">
         <div class="flex items-center gap-2">
-          <span class="text-neo-green text-lg font-bold">◆</span>
+          <span class="text-neo-green text-lg font-bold" style="color: ${networkColor}">◆</span>
           <span class="font-bold text-slate-800 dark:text-text-primary truncate max-w-[300px]" id="active-session-name">Chat</span>
         </div>
         <div class="flex gap-2">
@@ -34,13 +41,15 @@ export async function renderChat() {
         </div>
       </div>
 
-      <div class="chat-messages flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-4" id="chat-messages">
-        <div class="flex-1 flex items-center justify-center opacity-50"><div class="animate-pulse">Loading conversation...</div></div>
+      <div class="flex-1 flex flex-col border-[3px] bg-white dark:bg-bg-secondary shadow-md overflow-hidden min-w-0 transition-all" style="border-color: ${networkColor}">
+        <div class="chat-messages flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-4" id="chat-messages">
+          <div class="flex-1 flex items-center justify-center opacity-50"><div class="animate-pulse">Loading conversation...</div></div>
+        </div>
       </div>
-      
+
       <div class="px-4 pt-5 pb-6 border-t border-slate-200 dark:border-border bg-white dark:bg-bg-secondary w-full overflow-visible">
         <div class="w-full group overflow-visible">
-          <div class="flex flex-col bg-slate-50 dark:bg-bg-input border border-slate-200 dark:border-border-light rounded-2xl focus-within:border-neo-green/60 focus-within:shadow-[0_0_0_1px_rgba(0,229,153,0.3),0_0_20px_rgba(0,229,153,0.15)] focus-within:z-10 transition-all shadow-sm hover:shadow-md relative overflow-visible">
+          <div class="flex flex-col bg-slate-50 dark:bg-bg-input border border-slate-200 dark:border-border-light rounded-2xl focus-within:border-neo-green/60 focus-within:shadow-[0_0_0_1px_rgba(0,229,153,0.3),0_0_209x_rgba(0,229,153,0.15)] focus-within:z-10 transition-all shadow-sm hover:shadow-md relative overflow-visible">
             <!-- Text Input -->
             ${TextArea({
               id: 'chat-input',
@@ -52,6 +61,8 @@ export async function renderChat() {
             <div class="flex items-center justify-between px-3 py-2 border-t border-slate-200/50 dark:border-border/30 bg-white/50 dark:bg-white/5">
               <div class="flex items-center gap-1">
                 ${WalletSelector()}
+                <div class="w-px h-4 bg-slate-200 dark:bg-border/50 mx-1"></div>
+                ${NetworkSelector()}
                 <div class="w-px h-4 bg-slate-200 dark:bg-border/50 mx-1"></div>
                 ${ModelSelector()}
               </div>
@@ -74,11 +85,18 @@ export async function renderChat() {
           </div>
         </div>
       </div>
-    </div>`;
+    </div>
+`;
 
   initChatListeners();
   initWalletSelector();
   initModelSelector();
+  initNetworkSelector(() => {
+    // Refresh the whole chat view to update colors
+    renderChat();
+    // Also refresh global list to sync indicator
+    import('../../main.js').then(m => m.renderGlobalSessionList());
+  });
   await loadActiveSession();
 }
 
@@ -274,14 +292,20 @@ export function updateStopBtn() {
 
 export function appendBubble(container, role, text) {
   if (!container) return;
+  const wrapper = document.createElement('div');
+  wrapper.className = `flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-slide`;
+  
   const div = document.createElement('div');
-  div.className = `max-w-[720px] px-4 py-3 rounded-2xl text-[14.5px] leading-relaxed animate-fade-slide ${
+  div.className = `max-w-[85%] md:max-w-[75%] px-4 py-3 rounded-2xl text-[14.5px] leading-relaxed shadow-sm ${
     role === 'user' 
-      ? 'self-end bg-slate-900 text-white dark:bg-gradient-to-br dark:from-[#1a3a2d] dark:to-[#14302b] dark:border dark:border-[#00e599]/15 rounded-br-sm shadow-lg shadow-black/5' 
-      : 'self-start bg-slate-100 dark:bg-bg-card text-slate-800 dark:text-text-primary border border-slate-200 dark:border-border rounded-bl-sm shadow-sm'
+      ? 'bg-slate-900 text-white dark:bg-gradient-to-br dark:from-[#1a3a2d] dark:to-[#14302b] dark:border dark:border-[#00e599]/15 rounded-br-sm shadow-lg shadow-black/5' 
+      : 'bg-slate-100 dark:bg-bg-card text-slate-800 dark:text-text-primary border border-slate-200 dark:border-border rounded-bl-sm'
   }`;
+  
   div.innerHTML = role === 'assistant' ? parseMarkdown(text) : esc(text);
-  container.appendChild(div);
+  
+  wrapper.appendChild(div);
+  container.appendChild(wrapper);
   container.scrollTop = container.scrollHeight;
 }
 
@@ -306,11 +330,16 @@ export function removeThinking(container) {
 
 export function appendToolCall(container, event) {
   if (!container) return;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'flex w-full justify-start animate-fade-slide mb-2';
+  
   const temp = document.createElement('div');
   temp.innerHTML = ActivityCard({ event });
   const el = temp.firstElementChild;
   initActivityCard(el);
-  container.appendChild(el);
+  
+  wrapper.appendChild(el);
+  container.appendChild(wrapper);
   container.scrollTop = container.scrollHeight;
 }
 

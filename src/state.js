@@ -6,7 +6,9 @@ export const state = {
     mode: 'supervised',
     systemInstructions: '',
     network: 'testnet',
-    theme: localStorage.getItem('theme') || 'system'
+    testnetColor: '#00e599', 
+    mainnetColor: '#ef4444', // Red for Mainnet
+    theme: localStorage.getItem('theme') || 'dark'
   },
   currentPage: 'chat',
   activeSessionId: localStorage.getItem('activeSessionId') || null,

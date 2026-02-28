@@ -1,8 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { callTool } from './mcp.service.js';
 import { addMessage, addEvent } from './session.service.js';
-import { getSelectedWallets, performTransfer } from './wallet.service.js';
+import { getSelectedWallets } from './wallet.service.js';
 import { CRITICAL_TOOLS } from '../config/constants.js';
+import { LOCAL_TOOL_DEFINITIONS } from '../tools/definitions.js';
+import { executeLocalTool } from '../tools/handlers.js';
 
 let anthropic = null;
 
@@ -43,11 +45,15 @@ export async function runAgentLoop(session, userMessage, mcpTools, emitEvent) {
   const userEvent = addEvent(session.id, { type: 'user_message', content: userMessage });
   emitEvent(userEvent);
 
-  const tools = mcpTools.map((t) => ({
-    name: t.name,
-    description: t.description || '',
-    input_schema: t.inputSchema || { type: 'object', properties: {} },
-  }));
+  // Combine MCP tools with local-only tools
+  const tools = [
+    ...mcpTools.map((t) => ({
+      name: t.name,
+      description: t.description || '',
+      input_schema: t.inputSchema || { type: 'object', properties: {} },
+    })),
+    ...LOCAL_TOOL_DEFINITIONS
+  ];
 
   const abortController = new AbortController();
   session.abortController = abortController;
@@ -143,17 +149,15 @@ export async function runAgentLoop(session, userMessage, mcpTools, emitEvent) {
             let resultText;
             let success = true;
 
-            if (block.name === 'transfer_assets') {
-              const result = await performTransfer(
-                block.input.fromAddress,
-                block.input.toAddress,
-                block.input.amount,
-                block.input.asset,
-                session.settings.network
-              );
+            // Check if it's a local-only tool first
+            const isLocalTool = LOCAL_TOOL_DEFINITIONS.some(t => t.name === block.name);
+
+            if (isLocalTool) {
+              const result = await executeLocalTool(block.name, block.input, session);
               resultText = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
-              success = true;
+              success = result.success !== false;
             } else {
+              // Fallback to MCP tools
               const result = await callTool(block.name, block.input);
               resultText =
                 result.content

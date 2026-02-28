@@ -13,7 +13,16 @@ db.exec(`
     settings TEXT,
     createdAt INTEGER,
     updatedAt INTEGER
-  )
+  );
+
+  CREATE TABLE IF NOT EXISTS wallets (
+    id TEXT PRIMARY KEY,
+    label TEXT,
+    address TEXT,
+    publicKey TEXT,
+    wif TEXT,
+    createdAt INTEGER
+  );
 `);
 
 export default db;

@@ -29,7 +29,6 @@ export async function renderSettings() {
           <div class="inline-flex bg-slate-100 dark:bg-bg-input p-1 rounded-xl border border-slate-200 dark:border-border" id="theme-toggle">
             ${ThemeToggleOption('light', '☀️ Light', state.settings.theme)}
             ${ThemeToggleOption('dark', '🌙 Dark', state.settings.theme)}
-            ${ThemeToggleOption('system', '💻 System', state.settings.theme)}
           </div>
         </div>
 
@@ -41,12 +40,22 @@ export async function renderSettings() {
           </div>
         </div>
 
-        <div class="settings-section">
-          <label class="block text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-text-secondary mb-2.5">Network</label>
-          <select class="bg-slate-100 dark:bg-bg-input border border-slate-200 dark:border-border-light rounded-xl px-4 py-2.5 text-slate-900 dark:text-text-primary outline-none cursor-pointer focus:ring-2 focus:ring-neo-green/20 focus:border-neo-green min-w-[200px] text-[14px]" id="network-select">
-            <option value="testnet" ${state.settings.network === 'testnet' ? 'selected' : ''}>Testnet</option>
-            <option value="mainnet" ${state.settings.network === 'mainnet' ? 'selected' : ''}>Mainnet</option>
-          </select>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+          <div class="settings-section">
+            <label class="block text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-text-secondary mb-2.5">Mainnet Branding</label>
+            <div class="flex items-center gap-3 p-1.5 bg-slate-100 dark:bg-bg-input rounded-xl border border-slate-200 dark:border-border">
+              <input type="color" id="mainnet-color" value="${state.settings.mainnetColor || '#ef4444'}" class="w-10 h-8 rounded-lg bg-transparent border-none cursor-pointer">
+              <span class="text-[13px] font-mono text-slate-500 dark:text-text-secondary uppercase">${state.settings.mainnetColor || '#ef4444'}</span>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <label class="block text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-text-secondary mb-2.5">Testnet Branding</label>
+            <div class="flex items-center gap-3 p-1.5 bg-slate-100 dark:bg-bg-input rounded-xl border border-slate-200 dark:border-border">
+              <input type="color" id="testnet-color" value="${state.settings.testnetColor || '#00e599'}" class="w-10 h-8 rounded-lg bg-transparent border-none cursor-pointer">
+              <span class="text-[13px] font-mono text-slate-500 dark:text-text-secondary uppercase">${state.settings.testnetColor || '#00e599'}</span>
+            </div>
+          </div>
         </div>
 
         <div class="settings-section">
@@ -99,12 +108,24 @@ function initSettingsListeners() {
     const inst = document.getElementById('system-instructions');
     if (inst) state.settings.systemInstructions = inst.value;
     
+    const mainColor = document.getElementById('mainnet-color');
+    const testColor = document.getElementById('testnet-color');
+    if (mainColor) state.settings.mainnetColor = mainColor.value;
+    if (testColor) state.settings.testnetColor = testColor.value;
+    
     const btn = document.getElementById('save-settings-btn');
     if (!btn) return;
     const originalText = btn.innerHTML;
     btn.textContent = 'Saving...';
     try {
       await api.updateSettings(state.settings, state.activeSessionId);
+      
+      // Update the session in the local list so sidebar/cues sync
+      const activeSession = state.sessions.find(s => s.id === state.activeSessionId);
+      if (activeSession) {
+        activeSession.settings = { ...state.settings };
+      }
+
       btn.textContent = '✓ Saved';
       setTimeout(() => (btn.innerHTML = originalText), 1500);
     } catch {
@@ -125,16 +146,16 @@ function initSettingsListeners() {
     });
   });
 
-  document.getElementById('network-select')?.addEventListener('change', (e) => {
-    state.settings.network = e.target.value;
-    const badge = document.getElementById('network-label');
-    if (badge) badge.textContent = state.settings.network === 'mainnet' ? 'Mainnet' : 'Testnet';
-  });
+
+  const updateHexLabel = (inputEl) => {
+    const label = inputEl.nextElementSibling;
+    if (label) label.textContent = inputEl.value;
+  };
+
+  document.getElementById('mainnet-color')?.addEventListener('input', (e) => updateHexLabel(e.target));
+  document.getElementById('testnet-color')?.addEventListener('input', (e) => updateHexLabel(e.target));
 
   document.getElementById('save-settings-btn')?.addEventListener('click', handleSave);
-
-  const badge = document.getElementById('network-label');
-  if (badge) badge.textContent = state.settings.network === 'mainnet' ? 'Mainnet' : 'Testnet';
 }
 
 async function loadMcpTools() {
