@@ -23,6 +23,10 @@ db.exec(`
     wif TEXT,
     createdAt INTEGER
   );
+  CREATE TABLE IF NOT EXISTS global_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    value TEXT
+  );
 `);
 
 export default db;

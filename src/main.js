@@ -34,9 +34,10 @@ export async function renderGlobalSessionList(force = false) {
       const active = s.id === state.activeSessionId;
       const timeHint = formatTimeAgo(s.updatedAt);
       
-      let dotColor = s.settings?.network === 'mainnet' 
-        ? (s.settings.mainnetColor || '#ef4444') 
-        : (s.settings.testnetColor || '#008055');
+      const network = s.settings?.network || 'testnet';
+      let dotColor = network === 'mainnet' 
+        ? (s.settings.mainnetColor || state.settings.mainnetColor || '#ef4444') 
+        : (s.settings.testnetColor || state.settings.testnetColor || '#008055');
 
       if (dotColor === '#00e599' && !document.documentElement.classList.contains('dark')) {
         dotColor = '#008055';
@@ -172,18 +173,24 @@ function initSidebar() {
 // ─── Boot ───────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // 1. Fetch critical bootstrap data first
+  try {
+    const [wallets, settings] = await Promise.all([
+      walletsApi.getWallets(),
+      api.getSettings()
+    ]);
+    updateState({ wallets, settings: { ...state.settings, ...settings } });
+  } catch (err) {
+    console.error('Failed to pre-fetch bootstrap data:', err);
+  }
+
+  // 2. Initialize UI with the loaded settings
   initSidebar();
   initTheme();
   connectWs();
   
-  // Pre-fetch critical data
+  // 3. Render initial view
   renderGlobalSessionList();
-  try {
-    const wallets = await walletsApi.getWallets();
-    updateState({ wallets });
-  } catch (err) {
-    console.error('Failed to pre-fetch wallets:', err);
-  }
   
   window.addEventListener('hashchange', onHashChange);
   onHashChange();

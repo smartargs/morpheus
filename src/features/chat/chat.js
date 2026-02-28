@@ -195,6 +195,17 @@ async function loadActiveSession() {
   try {
     const details = await api.getSessionDetails(state.activeSessionId);
     
+    // Sync global settings from the session data to the global state
+    if (details.settings) {
+      updateState({ settings: { ...state.settings, ...details.settings } });
+    }
+
+    // Update the session in the session list to ensure it has latest settings
+    const idx = state.sessions.findIndex(s => s.id === state.activeSessionId);
+    if (idx !== -1) {
+      state.sessions[idx].settings = details.settings;
+    }
+
     // Update cache
     state.sessionCache[state.activeSessionId] = {
       updatedAt: activeSession?.updatedAt || Date.now(),

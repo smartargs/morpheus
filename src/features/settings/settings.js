@@ -120,11 +120,15 @@ function initSettingsListeners() {
     try {
       await api.updateSettings(state.settings, state.activeSessionId);
       
-      // Update the session in the local list so sidebar/cues sync
-      const activeSession = state.sessions.find(s => s.id === state.activeSessionId);
-      if (activeSession) {
-        activeSession.settings = { ...state.settings };
-      }
+      // Update all sessions in local state to ensure sidebar syncs immediately
+      state.sessions.forEach(session => {
+        if (!session.settings) session.settings = {};
+        session.settings.mainnetColor = state.settings.mainnetColor;
+        session.settings.testnetColor = state.settings.testnetColor;
+      });
+
+      // Re-render sidebar to apply changes
+      import('../../main.js').then(m => m.renderGlobalSessionList());
 
       btn.textContent = '✓ Saved';
       setTimeout(() => (btn.innerHTML = originalText), 1500);
@@ -150,20 +154,6 @@ function initSettingsListeners() {
   const updateHexLabel = (inputEl) => {
     const label = inputEl.nextElementSibling;
     if (label) label.textContent = inputEl.value;
-    
-    // Sync to all sessions for live preview
-    const isMainnet = inputEl.id === 'mainnet-color';
-    if (isMainnet) state.settings.mainnetColor = inputEl.value;
-    else state.settings.testnetColor = inputEl.value;
-
-    state.sessions.forEach(session => {
-      if (!session.settings) session.settings = {};
-      if (isMainnet) session.settings.mainnetColor = inputEl.value;
-      else session.settings.testnetColor = inputEl.value;
-    });
-
-    // Re-render sidebar to show changes immediately for all chats
-    import('../../main.js').then(m => m.renderGlobalSessionList());
   };
 
   document.getElementById('mainnet-color')?.addEventListener('input', (e) => updateHexLabel(e.target));

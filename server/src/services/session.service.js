@@ -7,7 +7,8 @@ const globalSettings = {
   model: 'claude-sonnet-4-6',
   testnetColor: '#008055',
   mainnetColor: '#ef4444',
-  theme: 'dark'
+  theme: 'dark',
+  systemInstructions: ''
 };
 
 function persistGlobalSettings() {
@@ -37,20 +38,22 @@ export function loadSessions() {
   const stmt = db.prepare('SELECT * FROM sessions ORDER BY createdAt DESC');
   const rows = stmt.all();
   for (const row of rows) {
+    const sSettings = JSON.parse(row.settings);
+    // Clean up any global settings that might have leaked into session settings
+    const globalKeys = ['network', 'model', 'testnetColor', 'mainnetColor', 'theme', 'systemInstructions'];
+    globalKeys.forEach(key => delete sSettings[key]);
+    
     sessions.set(row.id, {
       ...row,
       conversationHistory: JSON.parse(row.conversationHistory),
       events: JSON.parse(row.events),
-    settings: {
-      mode: 'supervised',
-      systemInstructions: '',
-      selectedWalletIds: [],
-    },
-    abortController: null,
-    pendingApproval: null,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt
-  });
+      settings: sSettings,
+      abortController: null,
+      pendingApproval: null,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt
+    });
+  }
 }
 
 // Load global settings
@@ -93,7 +96,6 @@ export function createSession(name) {
     events: [],
     settings: {
       mode: 'supervised',
-      systemInstructions: '',
       selectedWalletIds: [],
     },
     abortController: null,
@@ -175,7 +177,7 @@ export function updateSettings(sessionId, newSettings) {
   if (!session) return;
   
   // Extract global settings
-  const globalKeys = ['network', 'model', 'testnetColor', 'mainnetColor', 'theme'];
+  const globalKeys = ['network', 'model', 'testnetColor', 'mainnetColor', 'theme', 'systemInstructions'];
   let globalChanged = false;
   globalKeys.forEach(key => {
     if (key in newSettings) {

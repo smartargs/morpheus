@@ -68,6 +68,6 @@ function updateThemeIcons(theme) {
 }
 
 export function initTheme() {
-  const saved = localStorage.getItem('theme') || 'dark';
+  const saved = state.settings.theme || localStorage.getItem('theme') || 'dark';
   setTheme(saved);
 }
