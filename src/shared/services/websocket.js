@@ -77,7 +77,7 @@ function handleEvent(event) {
       break;
 
     case 'approval_needed':
-      showApprovalModal(event);
+      if (chatMessages) chatFeature.appendApproval(chatMessages, event);
       break;
 
     case 'agent_done':
@@ -110,28 +110,3 @@ function handleEvent(event) {
   }
 }
 
-function showApprovalModal(event) {
-  const modal = document.getElementById('approval-modal');
-  const body = document.getElementById('approval-body');
-  if (!modal || !body) return;
-
-  updateState({ pendingApprovalEventId: event.eventId });
-  body.textContent = `Tool: ${event.toolName}\n\nArgs:\n${JSON.stringify(event.toolArgs, null, 2)}`;
-  modal.style.display = 'block';
-
-  document.getElementById('approval-approve').onclick = () => respondApproval(true);
-  document.getElementById('approval-reject').onclick = () => respondApproval(false);
-}
-
-async function respondApproval(approved) {
-  const modal = document.getElementById('approval-modal');
-  modal.style.display = 'none';
-  if (state.pendingApprovalEventId) {
-    try {
-      await chatApi.respondApproval(state.pendingApprovalEventId, approved, state.activeSessionId);
-    } catch {
-      // ignore
-    }
-    updateState({ pendingApprovalEventId: null });
-  }
-}

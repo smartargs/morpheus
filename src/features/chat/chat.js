@@ -253,6 +253,11 @@ function renderEvents(container, events) {
     else if (ev.type === 'user_message' || ev.role === 'user') appendBubble(container, 'user', ev.content);
     else if (ev.type === 'tool_call') appendToolCall(container, ev);
     else if (ev.type === 'tool_result' || ev.type === 'tool_error') updateToolResult(container, ev);
+    else if (ev.type === 'approval_needed') {
+       // Only show interactive approval if it's the last event of its kind
+       const handled = events.some(e => (e.type === 'approval_granted' || e.type === 'approval_rejected') && e.eventId === ev.eventId);
+       if (!handled) appendApproval(container, ev);
+    }
   });
   
   container.scrollTop = container.scrollHeight;
@@ -430,8 +435,78 @@ export function updateToolResult(container, event) {
     const statusClass = event.success !== false ? 'text-neo-green-readable' : 'text-red-500';
     
     body.innerHTML += `<div class="mt-3 pt-3 border-t border-slate-200/50 dark:border-border/30">
-      <div class="font-bold ${statusClass} mb-1 text-[11px] uppercase tracking-wider">${statusLabel}</div>
-      <div class="text-slate-500 dark:text-text-secondary">${esc(resultText)}</div>
+      <div class="font-bold \${statusClass} mb-1 text-[11px] uppercase tracking-wider">\${statusLabel}</div>
+      <div class="text-slate-500 dark:text-text-secondary">\${esc(resultText)}</div>
     </div>`;
   }
+}
+
+export function appendApproval(container, event) {
+  if (!container) return;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'flex w-full justify-start animate-fade-slide mb-4';
+  
+  const id = event.eventId; // ID of tool_call we are approving
+  const div = document.createElement('div');
+  div.className = 'w-full max-w-[720px] bg-slate-50/50 dark:bg-bg-input border-2 border-neo-green/20 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col gap-3.5';
+  div.id = `approval-${id}`;
+
+  const header = `
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-neo-green/10 flex items-center justify-center text-neo-green-readable text-xs">⚠️</div>
+      <div class="flex flex-col">
+        <span class="text-[10px] font-bold uppercase tracking-widest text-neo-green-readable leading-none mb-1">Approval Required</span>
+        <span class="text-[14px] font-bold text-slate-700 dark:text-text-primary leading-tight">Action: ${esc(event.toolName)}</span>
+      </div>
+    </div>
+  `;
+
+  const body = `
+    <div class="bg-white/50 dark:bg-black/20 rounded-xl p-3 border border-slate-200/50 dark:border-border/30">
+      <div class="text-[9px] font-bold text-slate-400 dark:text-text-muted uppercase tracking-wider mb-2">Technical Arguments</div>
+      <pre class="text-[11px] font-mono text-slate-600 dark:text-text-secondary whitespace-pre-wrap break-all leading-relaxed">${esc(JSON.stringify(event.toolArgs, null, 2))}</pre>
+    </div>
+  `;
+
+  const buttons = `
+    <div class="flex gap-2.5 justify-end approval-actions">
+      <button class="px-5 py-2.5 rounded-xl text-[12px] font-bold text-slate-500 hover:bg-slate-200 dark:hover:bg-white/5 transition-all reject-btn active:scale-95">Reject</button>
+      <button class="px-7 py-2.5 rounded-xl text-[12px] font-bold bg-neo-green text-black hover:opacity-90 transition-all shadow-lg shadow-neo-green/20 active:scale-95 approve-btn">Approve & Execute</button>
+    </div>
+  `;
+
+  div.innerHTML = header + body + buttons;
+  
+  const approveBtn = div.querySelector('.approve-btn');
+  const rejectBtn = div.querySelector('.reject-btn');
+  const actionArea = div.querySelector('.approval-actions');
+
+  const handleDecision = async (approved) => {
+    try {
+      approveBtn.disabled = true;
+      rejectBtn.disabled = true;
+      
+      const session = state.sessions.find(s => s.id === state.activeSessionId);
+      if (!session) return;
+
+      actionArea.innerHTML = `<div class="flex items-center gap-2 group">
+        <span class="w-1.5 h-1.5 rounded-full ${approved ? 'bg-neo-green animate-pulse' : 'bg-red-500'}"></span>
+        <div class="text-[11px] font-bold uppercase tracking-widest ${approved ? 'text-neo-green-readable' : 'text-red-500'} py-1">
+          ${approved ? 'Confirming Authorization...' : 'Cancelling Operation...'}
+        </div>
+      </div>`;
+      
+      await chatApi.respondApproval(id, approved, state.activeSessionId);
+    } catch (err) {
+      console.error('Failed to respond to approval:', err);
+      actionArea.innerHTML = `<span class="text-xs text-red-500">Failed to send decision. Try again.</span>`;
+    }
+  };
+
+  if (approveBtn) approveBtn.onclick = () => handleDecision(true);
+  if (rejectBtn) rejectBtn.onclick = () => handleDecision(false);
+
+  wrapper.appendChild(div);
+  container.appendChild(wrapper);
+  container.scrollTop = container.scrollHeight;
 }

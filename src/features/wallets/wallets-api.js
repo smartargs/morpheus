@@ -33,4 +33,12 @@ export const walletsApi = {
     }
     return res.json();
   },
+
+  async updateWallet(id, updates) {
+    return fetch(`/api/wallets/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+  },
 };

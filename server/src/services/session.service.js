@@ -39,7 +39,7 @@ export function loadSessions() {
   for (const row of rows) {
     const sSettings = JSON.parse(row.settings);
     // Clean up any global settings that might have leaked into session settings
-    const globalKeys = ['network', 'testnetColor', 'mainnetColor', 'theme', 'systemInstructions'];
+    const globalKeys = ['testnetColor', 'mainnetColor', 'theme', 'systemInstructions'];
     globalKeys.forEach(key => delete sSettings[key]);
     
     sessions.set(row.id, {
@@ -179,7 +179,7 @@ export function updateSettings(sessionId, newSettings) {
   if (!session) return;
   
   // Extract global settings
-  const globalKeys = ['network', 'testnetColor', 'mainnetColor', 'theme', 'systemInstructions'];
+  const globalKeys = ['testnetColor', 'mainnetColor', 'theme', 'systemInstructions'];
   let globalChanged = false;
   globalKeys.forEach(key => {
     if (key in newSettings) {

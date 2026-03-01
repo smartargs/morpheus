@@ -64,3 +64,10 @@ export const importJson = (req, res) => {
   }
 };
 
+export const update = (req, res) => {
+  const { id } = req.params;
+  const updated = walletService.updateWallet(id, req.body);
+  if (!updated) return res.status(404).json({ error: 'Wallet not found' });
+  res.json(updated);
+};
+
