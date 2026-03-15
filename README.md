@@ -2,6 +2,8 @@
 
 A premium AI-powered guide for navigating the Neo N3 blockchain Matrix. Morpheus combines the reasoning power of Claude Models with deep Neo N3 integration to help you manage wallets, check balances, and perform secure token transfers—all through a natural conversation.
 
+![Preview](https://pbs.twimg.com/media/HCUG2iIasAIWGsm?format=jpg&name=4096x4096)
+
 ## ✨ Features
 
 - **🧠 AI-Driven Blockchain Interaction**: Powered by Claude Models for intelligent tool use and blockchain analysis.
