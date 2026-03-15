@@ -1,4 +1,4 @@
-# Morpheus (Neo N3 Assistant)
+# Neo N3 Assistant
 
 A premium AI-powered guide for navigating the Neo N3 blockchain Matrix. Morpheus combines the reasoning power of Claude Models with deep Neo N3 integration to help you manage wallets, check balances, and perform secure token transfers—all through a natural conversation.
 
