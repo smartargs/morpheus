@@ -567,5 +567,18 @@ export const LOCAL_TOOL_DEFINITIONS = [
       },
       required: ['roothash', 'scripthash', 'prefix']
     }
+  },
+  {
+    name: 'get_neo_news',
+    description: 'Fetches the latest Neo blockchain news and updates from NeoNewsToday.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        count: {
+          type: 'number',
+          description: 'Number of articles to return (default: 5, max: 20).'
+        }
+      }
+    }
   }
 ];

@@ -3,6 +3,7 @@ import * as neonjs from './neonjs.tool.js';
 import * as neo3scan from './neo3scan.tool.js';
 import * as coingecko from './coingecko.tool.js';
 import * as rpc from './rpc.tool.js';
+import * as news from './news.tool.js';
 
 /**
  * Dispatches to origin-based tool modules.
@@ -36,6 +37,10 @@ export async function executeLocalTool(toolName, toolArgs, session) {
       return await neonjs.create_wallet(args);
     case 'transfer_assets':
       return await neonjs.transfer_assets(args, session);
+
+    // News
+    case 'get_neo_news':
+      return await news.get_neo_news(args);
 
     default:
       throw new Error(`Local tool handler for "${name}" not implemented.`);

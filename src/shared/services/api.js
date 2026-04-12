@@ -37,5 +37,10 @@ export const api = {
 
   async deleteSession(id) {
     return fetch(`/api/sessions/${id}`, { method: 'DELETE' });
+  },
+
+  async getOllamaModels() {
+    const res = await fetch('/api/ollama/models');
+    return res.json();
   }
 };

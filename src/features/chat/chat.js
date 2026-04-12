@@ -345,17 +345,12 @@ export function appendBubble(container, role, text, options = {}) {
   }
 
   const div = document.createElement('div');
-  const userDarkStyle = `background: linear-gradient(135deg, ${networkColor}15, ${networkColor}05); border: 1px solid ${networkColor}25;`;
-  
+
   div.className = `w-full px-4 py-3 rounded-2xl text-[14.5px] leading-relaxed shadow-sm ${
-    role === 'user' 
-      ? 'bg-slate-900 text-white dark:bg-slate-900 rounded-br-sm shadow-lg shadow-black/5' 
+    role === 'user'
+      ? 'bg-slate-200/80 text-slate-800 dark:bg-slate-800 dark:text-slate-100 rounded-br-sm'
       : 'bg-slate-100 dark:bg-bg-card text-slate-800 dark:text-text-primary border border-slate-200 dark:border-border rounded-bl-sm'
   }`;
-
-  if (role === 'user') {
-    div.setAttribute('style', userDarkStyle);
-  }
   
   div.innerHTML = role === 'assistant' ? parseMarkdown(text) : esc(text);
   
@@ -435,8 +430,8 @@ export function updateToolResult(container, event) {
     const statusClass = event.success !== false ? 'text-neo-green-readable' : 'text-red-500';
     
     body.innerHTML += `<div class="mt-3 pt-3 border-t border-slate-200/50 dark:border-border/30">
-      <div class="font-bold \${statusClass} mb-1 text-[11px] uppercase tracking-wider">\${statusLabel}</div>
-      <div class="text-slate-500 dark:text-text-secondary">\${esc(resultText)}</div>
+      <div class="font-bold ${statusClass} mb-1 text-[11px] uppercase tracking-wider">${statusLabel}</div>
+      <div class="text-slate-500 dark:text-text-secondary">${esc(resultText)}</div>
     </div>`;
   }
 }

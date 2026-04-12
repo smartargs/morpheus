@@ -7,7 +7,8 @@ const globalSettings = {
   testnetColor: '#008055',
   mainnetColor: '#ef4444',
   theme: 'dark',
-  systemInstructions: ''
+  systemInstructions: '',
+  ollamaEndpoint: 'http://localhost:11434'
 };
 
 function persistGlobalSettings() {
@@ -39,7 +40,7 @@ export function loadSessions() {
   for (const row of rows) {
     const sSettings = JSON.parse(row.settings);
     // Clean up any global settings that might have leaked into session settings
-    const globalKeys = ['testnetColor', 'mainnetColor', 'theme', 'systemInstructions'];
+    const globalKeys = ['testnetColor', 'mainnetColor', 'theme', 'systemInstructions', 'ollamaEndpoint'];
     globalKeys.forEach(key => delete sSettings[key]);
     
     sessions.set(row.id, {
@@ -179,7 +180,7 @@ export function updateSettings(sessionId, newSettings) {
   if (!session) return;
   
   // Extract global settings
-  const globalKeys = ['testnetColor', 'mainnetColor', 'theme', 'systemInstructions'];
+  const globalKeys = ['testnetColor', 'mainnetColor', 'theme', 'systemInstructions', 'ollamaEndpoint'];
   let globalChanged = false;
   globalKeys.forEach(key => {
     if (key in newSettings) {

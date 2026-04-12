@@ -1,14 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { callTool } from './mcp.service.js';
-import { addMessage, addEvent } from './session.service.js';
+import { addMessage, addEvent, getSettings } from './session.service.js';
 import { getWalletsByIds } from './wallet.service.js';
 import { CRITICAL_TOOLS } from '../config/constants.js';
 import { LOCAL_TOOL_DEFINITIONS } from '../tools/definitions.js';
 import { executeLocalTool } from '../tools/handlers.js';
+import {
+  getOllamaClient,
+  convertToolsToOpenAI,
+  convertMessagesToOpenAI,
+  parseOllamaResponse,
+} from './ollama.service.js';
 
 let anthropic = null;
 
-function getClient() {
+function getAnthropicClient() {
   if (!anthropic) {
     anthropic = new Anthropic();
   }
@@ -46,7 +52,9 @@ Be concise and helpful. Explain what you're doing at each step. If an operation 
 }
 
 export async function runAgentLoop(session, userMessage, mcpTools, emitEvent) {
-  const client = getClient();
+  const modelId = session.settings.model || 'claude-sonnet-4-6';
+  const isOllama = modelId.startsWith('ollama:');
+  const actualModel = isOllama ? modelId.slice(7) : modelId;
 
   addMessage(session.id, 'user', userMessage);
   const userEvent = addEvent(session.id, { type: 'user_message', content: userMessage });
@@ -76,16 +84,39 @@ export async function runAgentLoop(session, userMessage, mcpTools, emitEvent) {
 
       emitEvent({ type: 'thinking' });
 
-      const response = await client.messages.create(
-        {
-          model: session.settings.model || 'claude-sonnet-4-6',
-          max_tokens: 4096,
-          system: buildSystemPrompt(session),
-          tools,
-          messages: session.conversationHistory,
-        },
-        { signal: abortController.signal }
-      );
+      let response;
+      if (isOllama) {
+        const globalCfg = getSettings();
+        const ollamaBase = globalCfg.ollamaEndpoint || 'http://localhost:11434';
+        const ollamaClient = getOllamaClient(ollamaBase);
+        const openaiTools = convertToolsToOpenAI(tools);
+        const openaiMessages = convertMessagesToOpenAI(
+          session.conversationHistory,
+          buildSystemPrompt(session)
+        );
+        const raw = await ollamaClient.chat.completions.create(
+          {
+            model: actualModel,
+            max_tokens: 4096,
+            tools: openaiTools,
+            messages: openaiMessages,
+          },
+          { signal: abortController.signal }
+        );
+        response = parseOllamaResponse(raw);
+      } else {
+        const client = getAnthropicClient();
+        response = await client.messages.create(
+          {
+            model: actualModel,
+            max_tokens: 4096,
+            system: buildSystemPrompt(session),
+            tools,
+            messages: session.conversationHistory,
+          },
+          { signal: abortController.signal }
+        );
+      }
 
       const assistantContent = response.content;
       addMessage(session.id, 'assistant', assistantContent);

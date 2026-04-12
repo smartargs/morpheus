@@ -5,7 +5,7 @@ import { state } from '../../state.js';
 import { esc } from '../../shared/utils/helpers.js';
 import { setTheme } from '../../shared/services/theme.js';
 import { Button } from '../../shared/components/button.js';
-import { TextArea } from '../../shared/components/input.js';
+import { Input, TextArea } from '../../shared/components/input.js';
 import { ToolItem, initToolItem } from './components/tool-item.js';
 
 export async function renderSettings() {
@@ -68,6 +68,24 @@ export async function renderSettings() {
           })}
         </div>
 
+        <div class="settings-section">
+          <label class="block text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-text-secondary mb-2.5">Ollama Endpoint</label>
+          <p class="text-[13px] text-slate-500 dark:text-text-secondary mb-3">Connect to a local Ollama instance to use open-source models privately.</p>
+          <div class="flex items-center gap-3">
+            <div class="flex-1">
+              ${Input({
+                id: 'ollama-endpoint',
+                value: esc(state.settings.ollamaEndpoint || 'http://localhost:11434'),
+                placeholder: 'http://localhost:11434'
+              })}
+            </div>
+            <button id="test-ollama-btn" class="px-4 py-2.5 text-[12px] font-medium rounded-xl border border-slate-200 dark:border-border text-slate-600 dark:text-text-secondary hover:bg-slate-50 dark:hover:bg-bg-card-hover transition-colors whitespace-nowrap">
+              Test Connection
+            </button>
+          </div>
+          <p id="ollama-status" class="text-[12px] mt-2 hidden"></p>
+        </div>
+
         ${Button({ id: 'save-settings-btn', label: 'Save Settings', className: 'min-w-[150px] justify-center' })}
 
         <div class="pt-8 border-t border-slate-200 dark:border-border">
@@ -104,14 +122,43 @@ function initSettingsListeners() {
     });
   });
 
+  // Ollama test connection
+  document.getElementById('test-ollama-btn')?.addEventListener('click', async () => {
+    const endpoint = document.getElementById('ollama-endpoint')?.value || 'http://localhost:11434';
+    const statusEl = document.getElementById('ollama-status');
+    if (!statusEl) return;
+
+    statusEl.textContent = 'Connecting...';
+    statusEl.className = 'text-[12px] mt-2 text-slate-400 dark:text-text-muted';
+    statusEl.classList.remove('hidden');
+
+    try {
+      const res = await fetch(`/api/ollama/models?endpoint=${encodeURIComponent(endpoint)}`);
+      const models = await res.json();
+      if (models.length > 0) {
+        statusEl.textContent = `Connected — ${models.length} model${models.length > 1 ? 's' : ''} available`;
+        statusEl.className = 'text-[12px] mt-2 text-emerald-600 dark:text-neo-green';
+      } else {
+        statusEl.textContent = 'Connected but no models found. Pull a model with: ollama pull llama3.1:8b';
+        statusEl.className = 'text-[12px] mt-2 text-amber-500';
+      }
+    } catch {
+      statusEl.textContent = 'Could not connect to Ollama. Is it running?';
+      statusEl.className = 'text-[12px] mt-2 text-red-500';
+    }
+  });
+
   const handleSave = async () => {
     const inst = document.getElementById('system-instructions');
     if (inst) state.settings.systemInstructions = inst.value;
-    
+
     const mainColor = document.getElementById('mainnet-color');
     const testColor = document.getElementById('testnet-color');
     if (mainColor) state.settings.mainnetColor = mainColor.value;
     if (testColor) state.settings.testnetColor = testColor.value;
+
+    const ollamaEndpoint = document.getElementById('ollama-endpoint');
+    if (ollamaEndpoint) state.settings.ollamaEndpoint = ollamaEndpoint.value;
     
     const btn = document.getElementById('save-settings-btn');
     if (!btn) return;
