@@ -219,16 +219,48 @@ async function loadMcpTools() {
       container.innerHTML = '<p class="text-[13px] text-slate-400 dark:text-text-muted">No tools available — MCP server may not be connected.</p>';
       return;
     }
-    
+
+    const rpcTools = tools.filter(t => t.name?.startsWith('rpc_'));
+    const otherTools = tools.filter(t => !t.name?.startsWith('rpc_'));
+
     container.innerHTML = '';
-    tools.forEach(t => {
-      const temp = document.createElement('div');
-      temp.innerHTML = ToolItem({ tool: t });
-      const el = temp.firstElementChild;
-      initToolItem(el);
-      container.appendChild(el);
-    });
+    if (otherTools.length) container.appendChild(buildToolGroup('Capabilities', otherTools, true));
+    if (rpcTools.length) container.appendChild(buildToolGroup('RPC Methods', rpcTools, false));
   } catch {
     container.innerHTML = '<p class="text-[13px] text-red-400">Could not load tools.</p>';
   }
+}
+
+function buildToolGroup(title, tools, expanded) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'tool-group border border-slate-200 dark:border-border rounded-xl overflow-hidden bg-white dark:bg-bg-card';
+  wrapper.innerHTML = `
+    <div class="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-bg-card-hover transition-colors tool-group-header">
+      <div class="flex items-center gap-2">
+        <span class="text-[13px] font-bold uppercase tracking-wider text-slate-700 dark:text-text-primary">${esc(title)}</span>
+        <span class="text-[11px] font-mono text-slate-400 dark:text-text-muted">${tools.length}</span>
+      </div>
+      <span class="text-slate-400 dark:text-text-muted text-[11px] transition-transform tool-group-chevron">▼</span>
+    </div>
+    <div class="tool-group-body px-3 pb-3 space-y-2 ${expanded ? '' : 'hidden'}"></div>
+  `;
+
+  const body = wrapper.querySelector('.tool-group-body');
+  tools.forEach(t => {
+    const temp = document.createElement('div');
+    temp.innerHTML = ToolItem({ tool: t });
+    const el = temp.firstElementChild;
+    initToolItem(el);
+    body.appendChild(el);
+  });
+
+  const header = wrapper.querySelector('.tool-group-header');
+  const chevron = wrapper.querySelector('.tool-group-chevron');
+  if (expanded) chevron.style.transform = 'rotate(180deg)';
+  header.addEventListener('click', () => {
+    const isHidden = body.classList.toggle('hidden');
+    chevron.style.transform = isHidden ? '' : 'rotate(180deg)';
+  });
+
+  return wrapper;
 }
